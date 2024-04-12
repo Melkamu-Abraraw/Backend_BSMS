@@ -8,7 +8,10 @@ const HouseSchema = new Schema(
       required: [true, "Title is required!"],
     },
     Location: {
-      type: String,
+      type: {
+        latitude: { type: Number, required: true },
+        longitude: { type: Number, required: true }
+      },
       required: [true, "Location is required!"],
     },
     Description: {
@@ -31,7 +34,7 @@ const HouseSchema = new Schema(
     },
     City: {
       type: String,
-      required: [true, "city is required!"],
+      required: [true, "City is required!"],
     },
     PriceCategory: {
       type: String,
@@ -46,10 +49,6 @@ const HouseSchema = new Schema(
     },
     Area: {
       type: Number,
-    },
-    Location: {
-      type: Object,
-      required: [true, "Location is required!"],
     },
     Price: {
       type: Number,
