@@ -3,6 +3,7 @@ const Schema = mongoose.Schema;
 
 const HouseSchema = new Schema(
   {
+<<<<<<< HEAD
     Title: {
       type: String,
       required: [true, "Title is required!"],
@@ -25,10 +26,13 @@ const HouseSchema = new Schema(
     PropertyCategory: {
       type: String,
     },
+=======
+>>>>>>> 04574d1258fcb5aea594b9d69b683fe459f0d6bb
     ContractType: {
       type: String,
       required: [true, "ContractType is required!"],
     },
+<<<<<<< HEAD
     Currency: {
       type: String,
     },
@@ -37,7 +41,11 @@ const HouseSchema = new Schema(
       required: [true, "City is required!"],
     },
     PriceCategory: {
+=======
+    HouseType: {
+>>>>>>> 04574d1258fcb5aea594b9d69b683fe459f0d6bb
       type: String,
+      required: [true, "HouseType is required!"],
     },
     Bedroom: {
       type: Number,
@@ -49,7 +57,23 @@ const HouseSchema = new Schema(
     },
     Area: {
       type: Number,
+      required: [true, "Area is required!"],
     },
+<<<<<<< HEAD
+=======
+    Location: {
+      type: Object,
+      required: [true, "Location is required!"],
+    },
+    City: {
+      type: String,
+      required: [true, "city is required!"],
+    },
+    Description: {
+      type: String,
+      required: [true, "Description info is required!"],
+    },
+>>>>>>> 04574d1258fcb5aea594b9d69b683fe459f0d6bb
     Price: {
       type: Number,
       required: [true, "Price is required!"],
@@ -62,9 +86,7 @@ const HouseSchema = new Schema(
       enum: ["Pending", "Approved", "Rejected"],
       default: "Pending",
     },
-    YearBuilt: {
-      type: String,
-    },
+
     approvedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -73,7 +95,15 @@ const HouseSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    PropertyType: {
+      type: String,
+      default: "House",
+    },
+    UploadedBy: {
+      type: String,
+    },
     imageUrls: [String],
+    documentUrls: [String],
   },
   { timestamps: true }
 );

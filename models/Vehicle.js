@@ -14,35 +14,16 @@ const VehicleSchema = new Schema(
       type: String,
       required: [true, "required!"],
     },
-    Brand: {
-      type: String,
-    },
-    BodyType: {
-      type: String,
-    },
-    Model: {
-      type: String,
-    },
-    EngineSize: {
-      type: String,
-    },
-    Millage: {
-      type: String,
-    },
+
     Colour: {
       type: String,
       required: [true, "required!"],
     },
-    Currency: {
-      type: String,
-    },
-    PriceCategory: {
-      type: String,
-    },
-    City: {
-      type: String,
-    },
     Transmission: {
+      type: String,
+      required: [true, "required"],
+    },
+    VIN: {
       type: String,
       required: [true, "required"],
     },
@@ -78,7 +59,11 @@ const VehicleSchema = new Schema(
       type: String,
       default: "Vehicle",
     },
+    uploadedby: {
+      type: String,
+    },
     imageUrls: [String],
+    documentUrls: [String],
   },
   { timestamps: true }
 );

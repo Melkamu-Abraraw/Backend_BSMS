@@ -16,8 +16,7 @@ cloudinary.config({
   api_secret: "iTi78ih5itaEnbiFF8oc7raVbvw",
 });
 
-const userRegister = (req, res, next) => {
-  console.log(req.body);
+const userRegister = async (req, res, next) => {
   try {
     bcrypt.hash(req.body.Password, 10, async (err, hashedPass) => {
       if (err) {
@@ -32,6 +31,7 @@ const userRegister = (req, res, next) => {
             .json({ success: false, error: "Maximum of 1 file allowed." });
         }
       }
+
       const uploadPromises = req.files.map((file) => {
         return new Promise((resolve, reject) => {
           if (file.size > 10485760) {
@@ -61,17 +61,70 @@ const userRegister = (req, res, next) => {
           streamifier.createReadStream(file.buffer).pipe(stream);
         });
       });
-
       await Promise.all(uploadPromises);
+
+      if (
+        req.body.FirstName === "" ||
+        req.body.LastName.trim === "" ||
+        req.body.Password === "" ||
+        req.body.Email === "" ||
+        req.body.Phone === "" ||
+        req.body.ConfirmPassword === ""
+      ) {
+        return res
+          .status(400)
+          .json({ success: false, message: "All fields are required." });
+      }
+      if (
+        !/^[a-zA-Z]+$/.test(req.body.FirstName) ||
+        !/^[a-zA-Z]+$/.test(req.body.LastName)
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "First name and last name must contain only letters.",
+          });
+      }
+      if (req.body.Password.length < 8) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Password must be at least 8 characters long.",
+          });
+      }
+
+      if (!/^\d+$/.test(req.body.Phone) || req.body.Phone.length > 10) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Phone number must contain only numbers and not exceed 10 digits.",
+          });
+      }
+      if (
+        !/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/.test(
+          req.body.Email
+        )
+      ) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid email address." });
+      }
 
       const existingUser = await User.findOne({ Email: req.body.Email });
       if (existingUser) {
-        return res.status(400).json({
-          success: false,
-          message: "Email address is already in use.",
-        });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Email address is already in use.",
+          });
       }
-      let user = new User({
+
+      const user = new User({
         FirstName: req.body.FirstName,
         LastName: req.body.LastName,
         Email: req.body.Email,
@@ -90,12 +143,13 @@ const userRegister = (req, res, next) => {
       });
     });
   } catch (error) {
-    console.error("Error during agent registration:", error);
+    console.error("Error during user registration:", error);
     res.status(500).json({
       message: "An error occurred!",
     });
   }
 };
+
 const agentRegister = async (req, res, next) => {
   try {
     bcrypt.hash(req.body.Password, 10, async function (err, hashedPass) {
@@ -148,7 +202,7 @@ const agentRegister = async (req, res, next) => {
       await Promise.all(uploadPromises);
       if (
         req.body.FirstName === "" ||
-        req.body.LastName === "" ||
+        req.body.LastName.trim === "" ||
         req.body.Password === "" ||
         req.body.Email === "" ||
         req.body.Phone === "" ||
@@ -159,41 +213,51 @@ const agentRegister = async (req, res, next) => {
           .json({ success: false, message: "All fields are required." });
       }
       if (req.body.Password.length < 8) {
-        return res.status(400).json({
-          success: false,
-          message: "Password must be at least 8 characters long.",
-        });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Password must be at least 8 characters long.",
+          });
       }
 
       const existingUser = await User.findOne({ Email: req.body.Email });
       if (existingUser) {
-        return res.status(400).json({
-          success: false,
-          message: "Email address is already in use.",
-        });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Email address is already in use.",
+          });
       }
       if (
         !/^[a-zA-Z]+$/.test(req.body.FirstName) ||
         !/^[a-zA-Z]+$/.test(req.body.LastName)
       ) {
-        return res.status(400).json({
-          success: false,
-          message: "First name and last name must contain only letters.",
-        });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "First name and last name must contain only letters.",
+          });
       }
       if (req.body.Password.length < 8) {
-        return res.status(400).json({
-          success: false,
-          message: "Password must be at least 8 characters long.",
-        });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Password must be at least 8 characters long.",
+          });
       }
 
       if (!/^\d+$/.test(req.body.Phone) || req.body.Phone.length > 10) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "Phone number must contain only numbers and not exceed 10 digits.",
-        });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Phone number must contain only numbers and not exceed 10 digits.",
+          });
       }
       if (
         !/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/.test(
@@ -231,7 +295,6 @@ const agentRegister = async (req, res, next) => {
 };
 
 const brokerAdminRegister = (req, res, next) => {
-  console.log(req.body);
   try {
     bcrypt.hash(req.body.Password, 10, async (err, hashedPass) => {
       if (err) {
@@ -277,16 +340,79 @@ const brokerAdminRegister = (req, res, next) => {
       });
 
       await Promise.all(uploadPromises);
+      if (
+        req.body.FirstName === "" ||
+        req.body.LastName.trim === "" ||
+        req.body.Password === "" ||
+        req.body.Email === "" ||
+        req.body.Phone === "" ||
+        req.body.ConfirmPassword === ""
+      ) {
+        return res
+          .status(400)
+          .json({ success: false, message: "All fields are required." });
+      }
+      if (req.body.Password.length < 8) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Password must be at least 8 characters long.",
+          });
+      }
 
       const existingUser = await User.findOne({ Email: req.body.Email });
       if (existingUser) {
-        return res.status(400).json({
-          success: false,
-          message: "Email address is already in use.",
-        });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Email address is already in use.",
+          });
+      }
+      if (
+        !/^[a-zA-Z]+$/.test(req.body.FirstName) ||
+        !/^[a-zA-Z]+$/.test(req.body.LastName)
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "First name and last name must contain only letters.",
+          });
+      }
+      if (req.body.Password.length < 8) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Password must be at least 8 characters long.",
+          });
+      }
+
+      if (!/^\d+$/.test(req.body.Phone) || req.body.Phone.length > 10) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Phone number must contain only numbers and not exceed 10 digits.",
+          });
+      }
+      if (
+        !/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/.test(
+          req.body.Email
+        )
+      ) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid email address." });
       }
       let user = new User({
+        FirstName: req.body.FirstName,
+        LastName: req.body.LastName,
         Email: req.body.Email,
+        Phone: req.body.Phone,
         Password: hashedPass,
         ConfirmPassword: hashedPass,
         Role: "BrokerAdmin",
@@ -354,7 +480,7 @@ const adminRegister = (req, res, next) => {
       await Promise.all(uploadPromises);
       if (
         req.body.FirstName === "" ||
-        req.body.LastName === "" ||
+        req.body.LastName.trim === "" ||
         req.body.Password === "" ||
         req.body.Email === "" ||
         req.body.Phone === "" ||
@@ -365,41 +491,51 @@ const adminRegister = (req, res, next) => {
           .json({ success: false, message: "All fields are required." });
       }
       if (req.body.Password.length < 8) {
-        return res.status(400).json({
-          success: false,
-          message: "Password must be at least 8 characters long.",
-        });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Password must be at least 8 characters long.",
+          });
       }
 
       const existingUser = await User.findOne({ Email: req.body.Email });
       if (existingUser) {
-        return res.status(400).json({
-          success: false,
-          message: "Email address is already in use.",
-        });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Email address is already in use.",
+          });
       }
       if (
         !/^[a-zA-Z]+$/.test(req.body.FirstName) ||
         !/^[a-zA-Z]+$/.test(req.body.LastName)
       ) {
-        return res.status(400).json({
-          success: false,
-          message: "First name and last name must contain only letters.",
-        });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "First name and last name must contain only letters.",
+          });
       }
       if (req.body.Password.length < 8) {
-        return res.status(400).json({
-          success: false,
-          message: "Password must be at least 8 characters long.",
-        });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "Password must be at least 8 characters long.",
+          });
       }
 
       if (!/^\d+$/.test(req.body.Phone) || req.body.Phone.length > 10) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "Phone number must contain only numbers and not exceed 10 digits.",
-        });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Phone number must contain only numbers and not exceed 10 digits.",
+          });
       }
       if (
         !/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/.test(
@@ -424,7 +560,7 @@ const adminRegister = (req, res, next) => {
       const usersaved = await user.save();
 
       res.json({
-        message: "BrokerAdmin Added Successfully",
+        message: "System Admin Added Successfully",
         data: usersaved,
       });
     });
@@ -499,12 +635,11 @@ const login = (req, res, next) => {
           } else {
             if (result) {
               let token = jwt.sign({ Email: User.Email }, "AZQ,PI)0(", {
-                expiresIn: "1h",
+                expiresIn: "24h",
               });
               res.json({
                 message: "Login Successful",
                 token,
-                User,
               });
             } else {
               res.json({
@@ -545,10 +680,12 @@ const initiatePassword = async (req, res) => {
     await initiatePasswordReset(req, res);
   } catch (error) {
     console.error("Error in initiatePasswordResetController:", error);
-    res.status(500).json({
-      success: false,
-      message: "An error occurred during password reset initiation.",
-    });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "An error occurred during password reset initiation.",
+      });
   }
 };
 
@@ -557,10 +694,12 @@ const completePassword = async (req, res) => {
     await completePasswordReset(req, res);
   } catch (error) {
     console.error("Error in completePasswordResetController:", error);
-    res.status(500).json({
-      success: false,
-      message: "An error occurred during password reset completion.",
-    });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "An error occurred during password reset completion.",
+      });
   }
 };
 const getUserById = async (req, res, next) => {
@@ -581,10 +720,12 @@ const getUserById = async (req, res, next) => {
     });
   } catch (error) {
     console.error("Error while fetching user:", error);
-    res.status(500).json({
-      success: false,
-      message: "An error occurred while fetching user.",
-    });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "An error occurred while fetching user.",
+      });
   }
 };
 

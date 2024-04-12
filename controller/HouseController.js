@@ -4,6 +4,9 @@ const House = require("../models/House");
 const User = require("../models/Users");
 const streamifier = require("streamifier");
 
+const jwt = require("jsonwebtoken");
+const NotificationService = require("../utils/notificationservice");
+
 cloudinary.config({
   cloud_name: "ds3wsc8as",
   api_key: "714722695687768",
@@ -13,6 +16,7 @@ cloudinary.config({
 const uploadImages = async (req, res) => {
   try {
     const imageUrls = [];
+    const documentUrls = [];
 
     if (!req.files || req.files.length === 0) {
       return res
@@ -24,36 +28,72 @@ const uploadImages = async (req, res) => {
         .status(400)
         .json({ success: false, error: "Maximum of 3 files allowed." });
     }
-    const uploadPromises = req.files.map((file) => {
-      return new Promise((resolve, reject) => {
-        if (file.size > 10485760) {
-          reject({
-            success: false,
-            error: `File ${file.originalname} is too large. Maximum size is 10 MB.`,
-          });
-        }
+    const uploadPromises = req.files
+      .filter((file) => {
+        const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
+        return allowedTypes.includes(file.mimetype);
+      })
+      .map((file) => {
+        return new Promise((resolve, reject) => {
+          if (file.size > 10485760) {
+            reject({
+              success: false,
+              error: `File ${file.originalname} is too large. Maximum size is 10 MB.`,
+            });
+          } else {
+            const folder = "Houses";
 
-        const folder = "Houses";
+            const stream = cloudinary.uploader.upload_stream(
+              { resource_type: "auto", folder: folder },
+              (error, result) => {
+                if (error) {
+                  console.error("Error uploading to Cloudinary:", error);
+                  reject({
+                    success: false,
+                    error: "Error uploading to Cloudinary",
+                  });
+                }
+                imageUrls.push(result.secure_url);
+                resolve();
+              }
+            );
 
-        const stream = cloudinary.uploader.upload_stream(
-          { resource_type: "auto", folder: folder },
-          (error, result) => {
-            if (error) {
-              console.error("Error uploading to Cloudinary:", error);
-              reject({
-                success: false,
-                error: "Error uploading to Cloudinary",
-              });
-            }
-            imageUrls.push(result.secure_url);
-            resolve();
+            streamifier.createReadStream(file.buffer).pipe(stream);
           }
-        );
-
-        streamifier.createReadStream(file.buffer).pipe(stream);
+        });
       });
-    });
+    const uploadDocumentPromises = req.files
+      .filter((file) => file.mimetype.startsWith("application/pdf"))
+      .map((file) => {
+        return new Promise((resolve, reject) => {
+          if (file.size > 10485760) {
+            reject({
+              success: false,
+              error: `File ${file.originalname} is too large. Maximum size is 10 MB.`,
+            });
+          }
 
+          const folder = "Documents";
+
+          const stream = cloudinary.uploader.upload_stream(
+            { resource_type: "auto", folder: folder },
+            (error, result) => {
+              if (error) {
+                console.error("Error uploading document to Cloudinary:", error);
+                reject({
+                  success: false,
+                  error: "Error uploading document to Cloudinary",
+                });
+              }
+              documentUrls.push(result.secure_url);
+              resolve();
+            }
+          );
+
+          streamifier.createReadStream(file.buffer).pipe(stream);
+        });
+      });
+    await Promise.all(uploadDocumentPromises);
     await Promise.all(uploadPromises);
     if (
       req.body.ContractType === "" ||
@@ -101,6 +141,21 @@ const uploadImages = async (req, res) => {
         .status(400)
         .json({ success: false, message: "City must contain only letters." });
     }
+    const token = req.headers.authorization;
+
+    if (!token) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Token is missing." });
+    }
+
+    const decodedToken = jwt.verify(token.split(" ")[1], "AZQ,PI)0(");
+
+    if (!decodedToken) {
+      return res.status(401).json({ success: false, error: "Invalid token." });
+    }
+
+    const userEmail = decodedToken.Email;
 
     const newHouse = new House({
       ContractType: req.body.ContractType,
@@ -112,7 +167,10 @@ const uploadImages = async (req, res) => {
       City: req.body.City,
       Description: req.body.Description,
       Price: req.body.Price,
+      Rating: req.body.Rating,
+      UploadedBy: userEmail,
       imageUrls: imageUrls,
+      documentUrls: documentUrls,
     });
 
     const savedHouse = await newHouse.save();
@@ -300,9 +358,10 @@ const assignBrokerToHouse = async (req, res) => {
       });
     }
 
-    house.Broker = broker._id;
+    house.Broker = broker.Email;
     await house.save();
-
+    const message = `You have been assigned to house ${houseId} by your broker manager.`;
+    await NotificationService.sendNotification(broker.Email, message);
     res.json({
       success: true,
       message: "Broker assigned successfully.",

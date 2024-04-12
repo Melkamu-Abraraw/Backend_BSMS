@@ -1,20 +1,48 @@
-
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const multer = require('multer');
-const LandController = require('../controller/LandController');
-const {isBrokerAdmin,verifyToken}=require('../middleware/brokeradminAuthenticate')
-const authenticate = require('../middleware/authenticate')
+const multer = require("multer");
+const LandController = require("../controller/LandController");
+const {
+  isBrokerAdmin,
+  verifyToken,
+} = require("../middleware/brokeradminAuthenticate");
+const authenticate = require("../middleware/authenticate");
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-router.get('/showland',LandController.showland)
-router.get('/:landID',LandController.getlandbyid)
-router.post('/uploadland', authenticate,upload.array('images', 5), LandController.uploadland);
+// Middleware for handling all file uploads
+const uploadFiles = upload.any();
 
-router.post('/deleteland',LandController.deleteland)
-router.put('/updateland/:LandId', upload.array('images', 3), LandController.updateland);
-router.put('/approve/:landID/:Email',authenticate,LandController.approveLand);
-router.put('/reject/:landID/:Email',authenticate,LandController.rejectLand);
-router.put('/assign/:landID/:Email',verifyToken,isBrokerAdmin,LandController.assignBrokerToLand)
+router.post(
+  "/uploadland",
+  (req, res, next) => {
+    uploadFiles(req, res, (err) => {
+      if (err) {
+        console.error(err);
+        return res.status(400).json({ success: false, error: err.message });
+      }
+      next();
+    });
+  },
+  authenticate,
+  LandController.uploadland
+);
+
+router.get("/showland", LandController.showland);
+router.get("/:landID", LandController.getlandbyid);
+router.post("/deleteland", LandController.deleteland);
+router.put(
+  "/updateland/:LandId",
+  upload.array("images", 3),
+  LandController.updateland
+);
+router.put("/approve/:landID/:Email", authenticate, LandController.approveLand);
+router.put("/reject/:landID/:Email", authenticate, LandController.rejectLand);
+router.put(
+  "/assign/:landID/:Email",
+  verifyToken,
+  isBrokerAdmin,
+  LandController.assignBrokerToLand
+);
+
 module.exports = router;
