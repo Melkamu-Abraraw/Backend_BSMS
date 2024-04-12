@@ -176,15 +176,18 @@ const updateemployee = async (req, res) => {
     }
 
     const updatedData = {
-      FirstName: req.body.FirstName,
-      LastName: req.body.LastName,
-      phoneNumber: req.body.phoneNumber,
+      Name: req.body.Name,
+      phone: req.body.phone,
       DOB: req.body.DOB,
       Experience: req.body.Experience,
       Gender: req.body.Gender,
       JobType: req.body.JobType,
       Skill: req.body.Skill,
       Description: req.body.Description,
+      RelativeName: req.body.RelativeName,
+      RelativePhone: req.body.RelativePhone,
+      RelativeAddress: req.body.RelativeAddress,
+      Relationship: req.body.Relationship,
     };
 
     if (req.files && req.files.length > 0) {
