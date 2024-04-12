@@ -1,67 +1,63 @@
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema
 
-const LandSchema = new Schema(
-  {
+const LandSchema = new Schema({
     ContractType: {
-      type: String,
-      required: [true, "ContractType is required!"],
+        type: String,
+        required:[true,"ContractType is required!"]
     },
-    Currency: {
-      type: String,
+    Area:{
+        type:Number,
+        required:[true,"Area is required!"]
     },
-    Area: {
-      type: Number,
-      required: [true, "Area is required!"],
+    Location:{
+        type:Object,
+        required:[true,"Location is required!"]
     },
-    PriceCategory: {
-      type: String,
+    City:{
+        type:String,
+        required:[true,"city is required!"]
     },
-    Location: {
-      type: Object,
-      required: [true, "Location is required!"],
-    },
-    City: {
-      type: String,
-      required: [true, "city is required!"],
-    },
-    Description: {
-      type: String,
-      required: [true, "Description info is required!"],
+    Description:{
+        type:String,
+        required:[true,"Description info is required!"]
     },
     Price: {
-      type: Number,
-      required: [true, "Price is required!"],
+        type:Number,
+        required:[true,"Price is required!"]
     },
-    Rating: {
-      type: Number,
+    Rating:{
+        type:Number
     },
-    Status: {
-      type: String,
-      enum: ["Pending", "Approved", "Rejected"],
-      default: "Pending",
+    Status:{
+        type:String,
+        enum:['Pending','Approved','Rejected'],
+        default: 'Pending'
     },
-    approvedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+    approvedBy:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'User'
     },
     Broker: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User' 
     },
-    UploadedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+  
+   UploadedBy:{
+   type:String
     },
-    PropertyType: {
-      type: String,
-      default: "Land",
+    PropertyType:{
+        type: String,
+        default:'Land'
     },
-
+    
     imageUrls: [String],
-  },
-  { timestamps: true }
-);
+    documentUrls:[String],
+       
+   
+ 
 
-const Land = mongoose.model("Land", LandSchema);
-module.exports = Land;
+},{timestamps:true})
+
+const Land = mongoose.model('Land',LandSchema)
+module.exports = Land

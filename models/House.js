@@ -3,38 +3,13 @@ const Schema = mongoose.Schema;
 
 const HouseSchema = new Schema(
   {
-    Title: {
-      type: String,
-      required: [true, "Title is required!"],
-    },
-    Location: {
-      type: String,
-      required: [true, "Location is required!"],
-    },
-    Description: {
-      type: String,
-      required: [true, "Description info is required!"],
-    },
-    PropertyType: {
-      type: String,
-      default: "House",
-    },
-    PropertyCategory: {
-      type: String,
-    },
     ContractType: {
       type: String,
       required: [true, "ContractType is required!"],
     },
-    Currency: {
+    HouseType: {
       type: String,
-    },
-    City: {
-      type: String,
-      required: [true, "city is required!"],
-    },
-    PriceCategory: {
-      type: String,
+      required: [true, "HouseType is required!"],
     },
     Bedroom: {
       type: Number,
@@ -46,10 +21,19 @@ const HouseSchema = new Schema(
     },
     Area: {
       type: Number,
+      required: [true, "Area is required!"],
     },
     Location: {
       type: Object,
       required: [true, "Location is required!"],
+    },
+    City: {
+      type: String,
+      required: [true, "city is required!"],
+    },
+    Description: {
+      type: String,
+      required: [true, "Description info is required!"],
     },
     Price: {
       type: Number,
@@ -63,9 +47,7 @@ const HouseSchema = new Schema(
       enum: ["Pending", "Approved", "Rejected"],
       default: "Pending",
     },
-    YearBuilt: {
-      type: String,
-    },
+
     approvedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -74,7 +56,15 @@ const HouseSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    PropertyType: {
+      type: String,
+      default: "House",
+    },
+    UploadedBy: {
+      type: String,
+    },
     imageUrls: [String],
+    documentUrls: [String],
   },
   { timestamps: true }
 );
