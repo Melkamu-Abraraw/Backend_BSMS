@@ -1,76 +1,63 @@
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const EmployeeSchema = new Schema({
-FirstName:{
-   type:String,
-   required:[true,"FirstName is required"] 
-},
-LastName:{
-    type:String,
-    required:[true,"Lastname is required"]
-},
-phoneNumber:{
-    type:String,
-    required:[true,"Phonenumber is required"]
-},
-DOB :{
-    type:String,
-    required:[true,"DOB is required"]  
-},
-Experience:{
-    type:String,
-    required:[true,"Experience is required"]    
-},
-Gender:{
-    type:String,
-    required:[true,"Gender is required"] 
-},
-JobType:{
-    type:String,
-    required:[true,"JobType is required"] 
-},
-Skill:{
-    type:String,
-    required:[true,"Skill is required"]
-},
-Description:{
-    type:String,
-    required:[true,"required"]
-},
-Relatives: [{
-    FirstName:{
-        type:String,
-        required:[true,"Firstname is required"]
+const EmployeeSchema = new Schema(
+  {
+    Name: {
+      type: String,
+      required: [true, "name is required"],
     },
-    LastName:{
-        type:String,
-        required:[true,"Lastname is required"]
+    Gender: {
+      type: String,
+      required: [true, "Gender is required"],
     },
-    Relative:
-    {
-        type:String,
-        required:[true,"Relative is required"]
+    DOB: {
+      type: String,
+      required: [true, "DOB is required"],
     },
-    Address:
-    {
-        type:Object,
-        required:[true,"Address is required"]
+    phone: {
+      type: String,
+      required: [true, "Phonenumber is required"],
     },
-    PhoneNumber:{
-        type:String,
-        required:[true,"phoneNumber is required"]
+    JobType: {
+      type: String,
+      required: [true, "JobType is required"],
     },
-    
-    imageUrls: [String]
-}],
-imageUrls: [String]
-       
-   
- 
+    Experience: {
+      type: String,
+      required: [true, "Experience is required"],
+    },
+    Skill: {
+      type: String,
+      required: [true, "Skill is required"],
+    },
 
-},{timestamps:true})
+    Description: {
+      type: String,
+      required: [true, "required"],
+    },
+    RelativeName: {
+      type: String,
+      required: [true, "RelativeName is required"],
+    },
+    RelativePhone: {
+      type: String,
+      required: [true, "RelativePhone is required"],
+    },
+    RelativeAddress: {
+      type: String,
+      required: [true, "RelativeAddress is required"],
+    },
+    Relationship: {
+      type: String,
+      required: [true, "Relationship is required"],
+    },
+    relativeImageUrls: [String],
 
+    imageUrls: [String],
+  },
+  { timestamps: true }
+);
 
-const Employee = mongoose.model('Employee',EmployeeSchema)
-module.exports = Employee
+const Employee = mongoose.model("Employee", EmployeeSchema);
+module.exports = Employee;

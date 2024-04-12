@@ -4,7 +4,7 @@ const Land = require("../models/Land");
 const User = require("../models/Users");
 const streamifier = require("streamifier");
 const jwt = require("jsonwebtoken");
-const uploadDocument = require("../controller/documentUpload");
+const NotificationService = require("../utils/notificationservice");
 cloudinary.config({
   cloud_name: "ds3wsc8as",
   api_key: "714722695687768",
@@ -406,9 +406,10 @@ const assignBrokerToLand = async (req, res) => {
       });
     }
 
-    land.Broker = broker._id;
+    land.Broker = broker.Email;
     await land.save();
-
+    const message = `You have been assigned to house ${houseId} by your broker manager.`;
+    await NotificationService.sendNotification(broker.Email, message);
     res.json({
       success: true,
       message: "Broker assigned successfully.",

@@ -1,77 +1,65 @@
-// Component Interface
-class Property {
-    async fetchApprovedProperties() {}
-}
+const User = require("./models/User");
+const cloudinary = require("cloudinary").v2;
+const streamifier = require("streamifier");
 
-// Leaf Classes
-class HouseProperty extends Property {
-    async fetchApprovedProperties() {
-        return await House.find({ Status: 'Approved' }).populate({
-            path: 'Broker',
-            select: 'FirstName LastName Phone'
+const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, error: "User not found." });
+    }
+
+    if (req.body.FirstName) user.FirstName = req.body.FirstName;
+    if (req.body.LastName) user.LastName = req.body.LastName;
+    if (req.body.Phone) user.Phone = req.body.Phone;
+
+    const imageUrls = [];
+    if (req.files && req.files.length > 0) {
+      if (req.files.length > 1) {
+        return res
+          .status(400)
+          .json({ success: false, error: "Maximum of 1 file allowed." });
+      }
+
+      const file = req.files[0];
+      if (file.size > 10485760) {
+        return res.status(400).json({
+          success: false,
+          error: `File ${file.originalname} is too large. Maximum size is 10 MB.`,
         });
-    }
-}
+      }
 
-class LandProperty extends Property {
-    async fetchApprovedProperties() {
-        return await Land.find({ Status: 'Approved' }).populate({
-            path: 'Broker',
-            select: 'FirstName LastName Phone'
-        });
-    }
-}
-
-class VehicleProperty extends Property {
-    async fetchApprovedProperties() {
-        return await Vehicle.find({ Status: 'Approved' }).populate({
-            path: 'Broker',
-            select: 'FirstName LastName Phone'
-        });
-    }
-}
-
-// Composite Class
-class CompositeProperty extends Property {
-    constructor() {
-        super();
-        this.properties = [];
-    }
-
-    addProperty(property) {
-        this.properties.push(property);
-    }
-
-    async fetchApprovedProperties() {
-        const allData = {};
-        for (const property of this.properties) {
-            const propertyName = property.constructor.name;
-            allData[propertyName] = await property.fetchApprovedProperties();
+      const folder = "ProfilePicture";
+      const stream = cloudinary.uploader.upload_stream(
+        { resource_type: "auto", folder: folder },
+        (error, result) => {
+          if (error) {
+            console.error("Error uploading to Cloudinary:", error);
+            return res
+              .status(500)
+              .json({ success: false, error: "Error uploading to Cloudinary" });
+          }
+          imageUrls.push(result.secure_url);
+          user.imageUrls = imageUrls;
+          user.save();
         }
-        return allData;
+      );
+      streamifier.createReadStream(file.buffer).pipe(stream);
     }
-}
 
-// Creating Instances of Leaf Classes
-const houseProperty = new HouseProperty();
-const landProperty = new LandProperty();
-const vehicleProperty = new VehicleProperty();
+    await user.save();
 
-// Creating Composite Object
-const compositeProperty = new CompositeProperty();
-compositeProperty.addProperty(houseProperty);
-compositeProperty.addProperty(landProperty);
-compositeProperty.addProperty(vehicleProperty);
-
-// Fetching Approved Properties
-const fetchAllValues = async (req, res) => {
-    try {
-        const allData = await compositeProperty.fetchApprovedProperties();
-        res.json({ success: true, data: allData });
-    } catch (error) {
-        console.error('Error fetching data:', error);
-        res.status(500).json({ success: false, error: 'An error occurred while fetching data' });
-    }
+    res.json({
+      success: true,
+      message: "Profile updated successfully.",
+      data: user,
+    });
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    res.status(500).json({ success: false, error: "Internal Server Error" });
+  }
 };
 
-module.exports = { fetchAllValues };
+module.exports = { updateProfile };

@@ -444,9 +444,10 @@ const assignBrokerToVehicle = async (req, res) => {
       });
     }
 
-    vehicle.Broker = broker._id;
+    vehicle.Broker = broker.Email;
     await vehicle.save();
-
+    const message = `You have been assigned to house ${houseId} by your broker manager.`;
+    await NotificationService.sendNotification(broker.Email, message);
     res.json({
       success: true,
       message: "Broker assigned successfully.",
