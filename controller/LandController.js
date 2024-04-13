@@ -4,7 +4,7 @@ const Land = require("../models/Land");
 const User = require("../models/Users");
 const streamifier = require("streamifier");
 const jwt = require("jsonwebtoken");
-const NotificationService = require("../utils/notificationservice");
+const uploadDocument = require("../controller/documentUpload");
 cloudinary.config({
   cloud_name: "ds3wsc8as",
   api_key: "714722695687768",
@@ -12,7 +12,17 @@ cloudinary.config({
 });
 
 const uploadland = async (req, res) => {
-  console.log(req.files);
+  var locationObject;
+  try {
+    const locationString = req.body.Location;
+    locationObject = JSON.parse(locationString);
+
+    console.log('Latitude:', locationObject.lat);
+    console.log('Longitude:', locationObject.lng);
+} catch (error) {
+    console.error('Error parsing location:', error);
+}
+
   try {
     const imageUrls = [];
     const documentUrls = [];
@@ -29,7 +39,7 @@ const uploadland = async (req, res) => {
     }
     const uploadPromises = req.files
       .filter((file) => {
-        const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
+        const allowedTypes = ["image/jpeg", "image/jpg", "image/png","multipart/form-data"];
         return allowedTypes.includes(file.mimetype);
       })
       .map((file) => {
@@ -93,43 +103,9 @@ const uploadland = async (req, res) => {
         });
       });
 
-    if (
-      req.body.ContractType === "" ||
-      req.body.Area === "" ||
-      req.body.imageUrls === "" ||
-      req.body.Location === "" ||
-      req.body.City === "" ||
-      req.body.Description === "" ||
-      req.body.Price === ""
-    ) {
-      return res
-        .status(400)
-        .json({ success: false, message: "All fields are required." });
-    }
-
-    if (!/^\d+$/.test(req.body.Area)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Area only contains numbers." });
-    }
-    if (!/^\d+$/.test(req.body.Price)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Price only contains numbers." });
-    }
-    if (!/^\d+$/.test(req.body.Rating)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Rating only contains numbers." });
-    }
-    if (!/^[a-zA-Z]+$/.test(req.body.City)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "City must contain only letters." });
-    }
+    console.log(req.body.Location)
     await Promise.all(uploadPromises);
     await Promise.all(uploadDocumentPromises);
-
     const token = req.headers.authorization;
 
     if (!token) {
@@ -139,28 +115,29 @@ const uploadland = async (req, res) => {
     }
 
     const decodedToken = jwt.verify(token.split(" ")[1], "AZQ,PI)0(");
+    console.log(decodedToken)
 
     if (!decodedToken) {
       return res.status(401).json({ success: false, error: "Invalid token." });
     }
-
     const userEmail = decodedToken.Email;
 
     const newland = new Land({
+      Title:req.body.title,
       ContractType: req.body.ContractType,
       Area: req.body.Area,
-      Location: req.body.Location,
       City: req.body.City,
       Description: req.body.Description,
+      PriceCategory:req.body.PriceCategory,
+      Currency:req.body.Currency,
       Price: req.body.Price,
-      Rating: req.body.Rating,
       imageUrls: imageUrls,
       UploadedBy: userEmail,
       documentUrls: documentUrls,
+      Location:locationObject
     });
 
     const savedland = await newland.save();
-
     res.json({
       success: true,
       message: "Land information added successfully",
@@ -313,7 +290,6 @@ const getlandbyid = async (req, res, next) => {
 const approveLand = async (req, res) => {
   try {
     const { landID, Email } = req.params;
-
     const user = await User.findOne({ Email: Email });
 
     if (!user) {
@@ -406,10 +382,9 @@ const assignBrokerToLand = async (req, res) => {
       });
     }
 
-    land.Broker = broker.Email;
+    land.Broker = broker._id;
     await land.save();
-    const message = `You have been assigned to house ${houseId} by your broker manager.`;
-    await NotificationService.sendNotification(broker.Email, message);
+
     res.json({
       success: true,
       message: "Broker assigned successfully.",

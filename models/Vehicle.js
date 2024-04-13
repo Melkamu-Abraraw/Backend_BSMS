@@ -1,29 +1,47 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 const VehicleSchema = new Schema(
+  
   {
+    Title:{
+      type: String,
+    },
+    Brand:{
+      type: String,
+    },
+    Model:{
+      type: String,
+    },
+    BodyType:{
+      type: String,
+    },
+    FuelType:{
+      type: String,
+    },
+    Milleage:{
+      type: String,
+    },
     ContractType: {
       type: String,
       required: [true, "ContractType is required!"],
     },
-    VehiclesType: {
-      type: String,
-      required: [true, "required!"],
-    },
-    FuelType: {
-      type: String,
-      required: [true, "required!"],
-    },
-
+    Currency:{
+      type:String,
+  },
+ 
+    Location: {
+      lat: { type: Number, required: true },
+      lng: { type: Number, required: true }
+  },
+  PriceCategory: {
+    type: String,
+},
+    
     Colour: {
       type: String,
       required: [true, "required!"],
     },
     Transmission: {
-      type: String,
-      required: [true, "required"],
-    },
-    VIN: {
       type: String,
       required: [true, "required"],
     },

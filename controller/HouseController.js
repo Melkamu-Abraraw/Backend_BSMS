@@ -14,6 +14,16 @@ cloudinary.config({
 });
 
 const uploadImages = async (req, res) => {
+  var locationObject;
+  try {
+    const locationString = req.body.Location;
+    locationObject = JSON.parse(locationString);
+
+    console.log('Latitude:', locationObject.lat);
+    console.log('Longitude:', locationObject.lng);
+} catch (error) {
+    console.error('Error parsing location:', error);
+}
   try {
     const imageUrls = [];
     const documentUrls = [];
@@ -95,52 +105,7 @@ const uploadImages = async (req, res) => {
       });
     await Promise.all(uploadDocumentPromises);
     await Promise.all(uploadPromises);
-    if (
-      req.body.ContractType === "" ||
-      req.body.HouseType === "" ||
-      req.body.Bedroom === "" ||
-      req.body.Bathroom === "" ||
-      req.body.Area === "" ||
-      req.body.imageUrls === "" ||
-      req.body.Location === "" ||
-      req.body.City === "" ||
-      req.body.Description === "" ||
-      req.body.Price === ""
-    ) {
-      return res
-        .status(400)
-        .json({ success: false, message: "All fields are required." });
-    }
-    if (!/^\d+$/.test(req.body.Area)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Area only contains numbers." });
-    }
-    if (!/^\d+$/.test(req.body.Price)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Price only contains numbers." });
-    }
-    if (!/^\d+$/.test(req.body.Bedroom)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Bedroom only contains numbers." });
-    }
-    if (!/^\d+$/.test(req.body.Bathroom)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Bathroom only contains numbers." });
-    }
-    if (!/^\d+$/.test(req.body.Rating)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Rating only contains numbers." });
-    }
-    if (!/^[a-zA-Z]+$/.test(req.body.City)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "City must contain only letters." });
-    }
+    
     const token = req.headers.authorization;
 
     if (!token) {
@@ -158,16 +123,19 @@ const uploadImages = async (req, res) => {
     const userEmail = decodedToken.Email;
 
     const newHouse = new House({
+      Title:req.body.title,
+      Location:locationObject,
       ContractType: req.body.ContractType,
-      HouseType: req.body.HouseType,
-      Bedroom: req.body.Bedroom,
-      Bathroom: req.body.Bathroom,
+      PropertyType: req.body.PropertyType,
+      PropertyCategory: req.body.PropertyCategory,
+      PriceCategory: req.body.PriceCategory,
+      Currency:req.body.Currency,
+      Bedroom: req.body.Bedrooms,
+      Bathroom: req.body.Bathrooms,
       Area: req.body.Area,
-      Location: req.body.Location,
       City: req.body.City,
-      Description: req.body.Description,
+      Description: req.body.description,
       Price: req.body.Price,
-      Rating: req.body.Rating,
       UploadedBy: userEmail,
       imageUrls: imageUrls,
       documentUrls: documentUrls,

@@ -14,7 +14,7 @@ const upload = multer({ storage: storage });
 const uploadFiles = upload.any();
 
 router.post(
-  "/uploadland",
+  "/upload",
   (req, res, next) => {
     uploadFiles(req, res, (err) => {
       if (err) {

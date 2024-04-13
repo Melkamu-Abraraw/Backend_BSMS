@@ -14,6 +14,16 @@ cloudinary.config({
 });
 
 const uploadvehicle = async (req, res) => {
+  var locationObject;
+  try {
+    const locationString = req.body.Location;
+    locationObject = JSON.parse(locationString);
+
+    console.log('Latitude:', locationObject.lat);
+    console.log('Longitude:', locationObject.lng);
+} catch (error) {
+    console.error('Error parsing location:', error);
+}
   try {
     const imageUrls = [];
     const documentUrls = [];
@@ -94,57 +104,9 @@ const uploadvehicle = async (req, res) => {
           streamifier.createReadStream(file.buffer).pipe(stream);
         });
       });
-    if (
-      req.body.ContractType === "" ||
-      req.body.VehiclesType === "" ||
-      req.body.FuelType === "" ||
-      req.body.Colour === "" ||
-      req.body.Transmission === "" ||
-      req.body.ManufacturingYear === "" ||
-      req.body.imageUrls === "" ||
-      req.body.VIN === "" ||
-      req.body.Description === "" ||
-      req.body.Price === ""
-    ) {
-      return res
-        .status(400)
-        .json({ success: false, message: "All fields are required." });
-    }
-
-    if (!/^\d+$/.test(req.body.Price)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Price only contains numbers." });
-    }
-    if (!/^\d+$/.test(req.body.Rating)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Rating only contains numbers." });
-    }
-    if (!/^[a-zA-Z]+$/.test(req.body.Colour)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Colour must contain only letters." });
-    }
-    if (!/^\d+$/.test(req.body.Rating)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Rating only contains numbers." });
-    }
-    if (!/^\d+$/.test(req.body.ManufacturingYear)) {
-      return res.status(400).json({
-        success: false,
-        message: "ManufacturingYear only contains numbers.",
-      });
-    }
-    if (!/^\d+$/.test(req.body.VIN)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "VIN only contains numbers." });
-    }
-    await Promise.all(uploadPromises);
-    await Promise.all(uploadDocumentPromises);
-    const token = req.headers.authorization;
+      await Promise.all(uploadDocumentPromises);
+      await Promise.all(uploadPromises);
+      const token = req.headers.authorization;
 
     if (!token) {
       return res
@@ -161,16 +123,21 @@ const uploadvehicle = async (req, res) => {
     const userEmail = decodedToken.Email;
 
     const newvehicle = new Vehicle({
-      ContractType: req.body.ContractType,
-      VehiclesType: req.body.VehiclesType,
+      Title:req.body.Title,
+      Brand: req.body.Brand,
+      Model: req.body.Model,
+      BodyType: req.body.BodyType,
       FuelType: req.body.FuelType,
-      Colour: req.body.Colour,
+      Milleage: req.body.Milleage,
+      Colour: req.body.Color,
       Transmission: req.body.Transmission,
-      VIN: req.body.VIN,
-      ManufacturingYear: req.body.ManufacturingYear,
+      ContractType: req.body.ContractType,
+      PriceCategory: req.body.PriceCategory,
+      ManufacturingYear: req.body.Year,
       Price: req.body.Price,
-      Description: req.body.Description,
-      Rating: req.body.Rating,
+      Description: req.body.description,
+      Currency: req.body.Currency,
+      Location:locationObject,
       uploadedby: userEmail,
       imageUrls: imageUrls,
       documentUrls: documentUrls,

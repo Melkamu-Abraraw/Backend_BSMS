@@ -26,6 +26,7 @@ const corsOptions = {
   optionSuccessStatus: 200,
 };
 
+app.use(cors(corsOptions)) 
 app.use("/api/User", AuthRoute);
 
 app.use("/api/House", HouseRoutes);
@@ -37,6 +38,6 @@ app.use("/api/brokerCompanies", brokerCompaniesRoutes);
 app.use("/api/Allproperty", Allproperty);
 app.use("/api/commission", commissionroutes);
 
-app.listen(3001, () => {
-  console.log("Node API App is running on port 3001 ");
+app.listen(3030, () => {
+  console.log("Node API App is running on port 3030 ");
 });

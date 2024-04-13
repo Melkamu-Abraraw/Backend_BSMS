@@ -637,9 +637,18 @@ const login = (req, res, next) => {
               let token = jwt.sign({ Email: User.Email }, "AZQ,PI)0(", {
                 expiresIn: "24h",
               });
-              res.json({
+              // Assuming `token` is the variable containing the token
+              // and `User` is the variable containing user data
+
+              // Create a new object combining the token and user data
+              const responseData = {
                 message: "Login Successful",
-                token,
+                token: token,
+                user: User, // Assuming User contains user data
+              };
+
+              res.json({
+                responseData,
               });
             } else {
               res.json({

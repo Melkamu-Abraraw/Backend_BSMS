@@ -2,32 +2,33 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema
 
 const LandSchema = new Schema({
+    Title:{
+        type: String,
+    },
     ContractType: {
         type: String,
-        required:[true,"ContractType is required!"]
+    },
+    PriceCategory: {
+        type: String,
+    },
+    Currency:{
+        type:String,
     },
     Area:{
         type:Number,
-        required:[true,"Area is required!"]
     },
-    Location:{
-        type:Object,
-        required:[true,"Location is required!"]
+    Location: {
+        lat: { type: Number, required: true },
+        lng: { type: Number, required: true }
     },
     City:{
         type:String,
-        required:[true,"city is required!"]
     },
     Description:{
         type:String,
-        required:[true,"Description info is required!"]
     },
     Price: {
         type:Number,
-        required:[true,"Price is required!"]
-    },
-    Rating:{
-        type:Number
     },
     Status:{
         type:String,
@@ -53,8 +54,6 @@ const LandSchema = new Schema({
     
     imageUrls: [String],
     documentUrls:[String],
-       
-   
  
 
 },{timestamps:true})
