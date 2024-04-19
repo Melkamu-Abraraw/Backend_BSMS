@@ -1,13 +1,14 @@
 const express = require("express");
 
 const mongoose = require("mongoose");
-//const url = "mongodb://0.0.0.0:27017/User";
-const BSMS_MONGO_URL =
-"mongodb+srv://BSMS:BSMS012345@bsms.f0yihgr.mongodb.net/User?retryWrites=true&w=majority&appName=bsms";
+const url = "mongodb://0.0.0.0:27017/User";
+
+//const BSMS_MONGO_URL =
+//"mongodb+srv://BSMS:BSMS012345@bsms.f0yihgr.mongodb.net/User?retryWrites=true&w=majority&appName=bsms";
 //.connect(BSMS_MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true })
 const app = express();
 mongoose
-  .connect(BSMS_MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(url, {})
   .then((_result) => console.log("database connected"))
   .catch((err) => console.log(err));
 
