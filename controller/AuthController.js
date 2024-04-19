@@ -275,7 +275,7 @@ const agentRegister = async (req, res, next) => {
         Phone: req.body.Phone,
         Password: hashedPass,
         ConfirmPassword: hashedPass,
-        Role: "Agent",
+        Role: "Broker",
         imageUrls: imageUrls,
       });
 
@@ -564,7 +564,7 @@ const Remove = (req, res, next) => {
 };
 
 const login = (req, res, next) => {
-  let username = req.body.username;
+  let username = req.body.Email;
   let password = req.body.Password;
 
   User.findOne({ $or: [{ Email: username }, { Phone: username }] })

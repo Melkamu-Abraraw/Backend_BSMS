@@ -3,21 +3,26 @@ const Schema = mongoose.Schema;
 
 const EmployeeSchema = new Schema(
   {
-    Name: {
+    EmpAvatar: [String],
+    FullName: {
       type: String,
       required: [true, "name is required"],
+    },
+    Age: {
+      type: String,
+      required: [true, "DOB is required"],
     },
     Gender: {
       type: String,
       required: [true, "Gender is required"],
     },
-    DOB: {
-      type: String,
-      required: [true, "DOB is required"],
-    },
-    phone: {
+    Phone: {
       type: String,
       required: [true, "Phonenumber is required"],
+    },
+    Address: {
+      type: String,
+      required: [true, "Skill is required"],
     },
     JobType: {
       type: String,
@@ -27,15 +32,7 @@ const EmployeeSchema = new Schema(
       type: String,
       required: [true, "Experience is required"],
     },
-    Skill: {
-      type: String,
-      required: [true, "Skill is required"],
-    },
-
-    Description: {
-      type: String,
-      required: [true, "required"],
-    },
+    RelAvatar: [String],
     RelativeName: {
       type: String,
       required: [true, "RelativeName is required"],
@@ -52,9 +49,6 @@ const EmployeeSchema = new Schema(
       type: String,
       required: [true, "Relationship is required"],
     },
-    relativeImageUrls: [String],
-
-    imageUrls: [String],
   },
   { timestamps: true }
 );

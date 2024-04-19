@@ -8,11 +8,14 @@ const upload = multer({ storage: storage });
 
 router.get("/showemployee", EmployeeController.showemployee);
 router.post("/addemployee", upload.any(), EmployeeController.addemployee);
-
-router.post("/deleteemployee", EmployeeController.deleteemployee);
+router.delete("/deleteemployee/:EmployeeId", EmployeeController.deleteemployee);
+router.get("/getEmployee/:EmployeeId", EmployeeController.getEmployee);
 router.put(
-  "/update/:EmployeeId",
-  upload.array("images", 3),
+  "/updateemployee/:EmployeeId",
+  upload.fields([
+    { name: "EmpAvatar", maxCount: 1 },
+    { name: "RelAvatar", maxCount: 1 },
+  ]),
   EmployeeController.updateemployee
 );
 module.exports = router;
