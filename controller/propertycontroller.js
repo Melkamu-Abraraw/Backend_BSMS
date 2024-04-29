@@ -72,6 +72,7 @@ const fetchAllValues = async (req, res) => {
   //   console.log(response.body);
   // });
 };
+
 const fetchCount = async (req, res) => {
   try {
     const [houseCount, landCount, vehicleCount, employeeCount] =

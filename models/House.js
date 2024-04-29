@@ -44,7 +44,7 @@ const HouseSchema = new Schema(
     Price: {
       type: Number,
     },
-    Rating: {
+    Favourite: {
       type: Number,
     },
     Status: {
