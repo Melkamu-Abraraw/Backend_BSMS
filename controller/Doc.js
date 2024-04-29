@@ -259,40 +259,9 @@ module.exports.getDoc = async (req, res) => {
         json.recipients[0].status === "finalized" &&
         json.recipients[1].status === "finalized"
       ) {
-        console.log("both sign");
       }
     })
     .catch((err) => console.error("error:" + err));
 };
 
-module.exports.downloadEnvelopeAndCertificate = async (req, res) => {
-  let options = {
-    method: "GET",
-    url: `https://api.signeasy.com/v3/rs/envelope/signed/${req.body.signed_id}/${req.body.original_id}/download`,
-    headers: {
-      Authorization: "Bearer " + process.env.SIGNEASY_ACCESS_TOKEN,
-    },
-    encoding: null,
-  };
-
-  request(options, function (error, response, body) {
-    if (error) {
-      console.error(error);
-      return;
-    }
-    if (response.statusCode !== 200) {
-      console.error("Request failed with status code:", response.statusCode);
-      return;
-    }
-
-    // Write binary data to a file
-    const filePath = `${__dirname}/downloads/certificate.pdf`;
-    fs.writeFile(filePath, body, "binary", function (writeError) {
-      if (writeError) {
-        console.error("Error writing file:", writeError);
-      } else {
-        console.log("File saved successfully at:", filePath);
-      }
-    });
-  });
-};
+module.exports.downloadEnvelopeAndCertificate = async (req, res) => {};
