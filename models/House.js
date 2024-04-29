@@ -5,15 +5,13 @@ const HouseSchema = new Schema(
   {
     Title: {
       type: String,
-      required: [true, "Title is required!"],
     },
     Location: {
-      lat: { type: Number, required: true },
-      lng: { type: Number, required: true }
-  },
+      lat: { type: Number },
+      lng: { type: Number },
+    },
     Description: {
       type: String,
-      required: [true, "Description info is required!"],
     },
     PropertyType: {
       type: String,
@@ -24,34 +22,27 @@ const HouseSchema = new Schema(
     },
     ContractType: {
       type: String,
-      required: [true, "ContractType is required!"],
     },
     Currency: {
       type: String,
     },
     City: {
       type: String,
-      required: [true, "City is required!"],
     },
     PriceCategory: {
       type: String,
-      required: [true, "HouseType is required!"],
     },
     Bedroom: {
       type: Number,
-      required: [true, "Bedroom is required!"],
     },
     Bathroom: {
       type: Number,
-      required: [true, "Bathroom is required!"],
     },
     Area: {
       type: Number,
-      required: [true, "Area is required!"],
     },
     Price: {
       type: Number,
-      required: [true, "Price is required!"],
     },
     Rating: {
       type: Number,
@@ -70,8 +61,8 @@ const HouseSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
-   
-    uploadedby: {
+
+    UploadedBy: {
       type: String,
     },
     imageUrls: [String],

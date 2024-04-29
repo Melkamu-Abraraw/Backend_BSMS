@@ -18,12 +18,9 @@ const uploadvehicle = async (req, res) => {
   try {
     const locationString = req.body.Location;
     locationObject = JSON.parse(locationString);
-
-    console.log('Latitude:', locationObject.lat);
-    console.log('Longitude:', locationObject.lng);
-} catch (error) {
-    console.error('Error parsing location:', error);
-}
+  } catch (error) {
+    console.error("Error parsing location:", error);
+  }
   try {
     const imageUrls = [];
     const documentUrls = [];
@@ -52,7 +49,6 @@ const uploadvehicle = async (req, res) => {
             });
           } else {
             const folder = "Vehicles";
-
             const stream = cloudinary.uploader.upload_stream(
               { resource_type: "auto", folder: folder },
               (error, result) => {
@@ -104,9 +100,9 @@ const uploadvehicle = async (req, res) => {
           streamifier.createReadStream(file.buffer).pipe(stream);
         });
       });
-      await Promise.all(uploadDocumentPromises);
-      await Promise.all(uploadPromises);
-      const token = req.headers.authorization;
+    await Promise.all(uploadDocumentPromises);
+    await Promise.all(uploadPromises);
+    const token = req.headers.authorization;
 
     if (!token) {
       return res
@@ -123,7 +119,7 @@ const uploadvehicle = async (req, res) => {
     const userEmail = decodedToken.Email;
 
     const newvehicle = new Vehicle({
-      Title:req.body.Title,
+      Title: req.body.Title,
       Brand: req.body.Brand,
       Model: req.body.Model,
       BodyType: req.body.BodyType,
@@ -137,7 +133,7 @@ const uploadvehicle = async (req, res) => {
       Price: req.body.Price,
       Description: req.body.description,
       Currency: req.body.Currency,
-      Location:locationObject,
+      Location: locationObject,
       uploadedby: userEmail,
       imageUrls: imageUrls,
       documentUrls: documentUrls,
@@ -147,7 +143,7 @@ const uploadvehicle = async (req, res) => {
 
     res.json({
       success: true,
-      message: "vehicle information added successfully",
+      message: "Vehicle Information added Successfully",
       data: {
         newvehicle: savedvehicle,
       },
@@ -309,14 +305,13 @@ const getvehiclebyid = async (req, res, next) => {
   }
 };
 const approveVehicle = async (req, res) => {
+  const agreementDoc = [];
+  console.log(req.params);
+  console.log(req.files);
+  console.log(req.body);
+
   try {
-    const { vehicleId, Email } = req.params;
-
-    const user = await User.findOne({ Email: Email });
-
-    if (!user) {
-      return res.status(404).json({ success: false, error: "User not found." });
-    }
+    const { vehicleId } = req.params;
 
     const vehicle = await Vehicle.findById(vehicleId);
 
@@ -326,16 +321,65 @@ const approveVehicle = async (req, res) => {
         .json({ success: false, error: "vehicle not found." });
     }
 
-    if (!isAuthorizedToApprove(user)) {
-      return res.status(403).json({
-        success: false,
-        error: "User is not authorized to approve vehicle.",
-      });
+    try {
+      if (!req.files || req.files.length === 0) {
+        return res
+          .status(400)
+          .json({ success: false, error: "No files uploaded." });
+      }
+      if (req.files.length > 4) {
+        return res
+          .status(400)
+          .json({ success: false, error: "Maximum of 3 files allowed." });
+      }
+
+      const uploadDocumentPromises = req.files
+        .filter((file) => file.mimetype.startsWith("application/pdf"))
+        .map((file) => {
+          return new Promise((resolve, reject) => {
+            if (file.size > 10485760) {
+              reject({
+                success: false,
+                error: `File ${file.originalname} is too large. Maximum size is 10 MB.`,
+              });
+            }
+
+            const folder = "Documents";
+
+            const stream = cloudinary.uploader.upload_stream(
+              { resource_type: "auto", folder: folder },
+              (error, result) => {
+                if (error) {
+                  console.error(
+                    "Error uploading document to Cloudinary:",
+                    error
+                  );
+                  reject({
+                    success: false,
+                    error: "Error uploading document to Cloudinary",
+                  });
+                }
+                agreementDoc.push(result.secure_url);
+                resolve();
+              }
+            );
+
+            streamifier.createReadStream(file.buffer).pipe(stream);
+          });
+        });
+      await Promise.all(uploadDocumentPromises);
+    } catch (error) {
+      console.error("Server error:", error);
+      if (!res.headersSent) {
+        res
+          .status(500)
+          .json({ success: false, error: "Internal Server Error" });
+      }
     }
-
-    (vehicle.Status = "Approved"), (vehicle.approvedBy = user._id);
+    console.log(vehicle.agreementDocUrl);
+    vehicle.agreementDocUrl = agreementDoc;
+    vehicle.Status = "Approved";
     await vehicle.save();
-
     res.json({
       success: true,
       message: "Vehicle approved successfully.",
@@ -404,17 +448,17 @@ const assignBrokerToVehicle = async (req, res) => {
         .json({ success: false, error: "Broker not found." });
     }
 
-    if (!isAuthorizedToAssign(broker)) {
-      return res.status(403).json({
-        success: false,
-        error: "Broker is not authorized to be assigned.",
-      });
-    }
+    // if (!isAuthorizedToAssign(broker)) {
+    //   return res.status(403).json({
+    //     success: false,
+    //     error: "Broker is not authorized to be assigned.",
+    //   });
+    // }
 
-    vehicle.Broker = broker.Email;
+    vehicle.Broker = broker._id;
     await vehicle.save();
-    const message = `You have been assigned to house ${houseId} by your broker manager.`;
-    await NotificationService.sendNotification(broker.Email, message);
+    const message = `You have been assigned to house ${vehicleId} by your broker manager.`;
+    // await NotificationService.sendNotification(broker.Email, message);
     res.json({
       success: true,
       message: "Broker assigned successfully.",

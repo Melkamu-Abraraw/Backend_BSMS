@@ -19,11 +19,11 @@ const uploadImages = async (req, res) => {
     const locationString = req.body.Location;
     locationObject = JSON.parse(locationString);
 
-    console.log('Latitude:', locationObject.lat);
-    console.log('Longitude:', locationObject.lng);
-} catch (error) {
-    console.error('Error parsing location:', error);
-}
+    console.log("Latitude:", locationObject.lat);
+    console.log("Longitude:", locationObject.lng);
+  } catch (error) {
+    console.error("Error parsing location:", error);
+  }
   try {
     const imageUrls = [];
     const documentUrls = [];
@@ -105,7 +105,7 @@ const uploadImages = async (req, res) => {
       });
     await Promise.all(uploadDocumentPromises);
     await Promise.all(uploadPromises);
-    
+
     const token = req.headers.authorization;
 
     if (!token) {
@@ -123,13 +123,13 @@ const uploadImages = async (req, res) => {
     const userEmail = decodedToken.Email;
 
     const newHouse = new House({
-      Title:req.body.title,
-      Location:locationObject,
+      Title: req.body.title,
+      Location: locationObject,
       ContractType: req.body.ContractType,
       PropertyType: req.body.PropertyType,
       PropertyCategory: req.body.PropertyCategory,
       PriceCategory: req.body.PriceCategory,
-      Currency:req.body.Currency,
+      Currency: req.body.Currency,
       Bedroom: req.body.Bedrooms,
       Bathroom: req.body.Bathrooms,
       Area: req.body.Area,
@@ -145,7 +145,7 @@ const uploadImages = async (req, res) => {
 
     res.json({
       success: true,
-      message: "House information added successfully",
+      message: "House Information added Successfully",
       data: {
         newHouse: savedHouse,
       },
@@ -277,20 +277,39 @@ const gethousebyid = async (req, res, next) => {
   try {
     let houseId = req.params.houseId;
 
-    const house = await House.findById(houseId).populate({
+    const mainHouse = await House.findById(houseId).populate({
       path: "Broker",
       select: "FirstName LastName Phone",
     });
 
-    if (!house) {
+    if (!mainHouse) {
       return res
         .status(404)
         .json({ success: false, message: "House not found." });
     }
+    const similarHouses = await House.find({
+      _id: { $ne: mainHouse._id }, // Exclude the main house
+      Price: { $gte: mainHouse.Price - 1000, $lte: mainHouse.Price + 1000 }, // Adjust the price range as needed
+      // location: {
+      //   $near: {
+      //     $geometry: {
+      //       type: "Point",
+      //       coordinates: [mainHouse.location.coordinates[0], mainHouse.location.coordinates[1]],
+      //     },
+      //     $maxDistance: 10000, // Maximum distance in meters (adjust as needed)
+      //   },
+      // },
+    })
+      .limit(3)
+      .populate({
+        path: "Broker",
+        select: "FirstName LastName Phone",
+      }); // Limit to 3 similar houses
 
     res.json({
       success: true,
-      data: house,
+      mainHouse: mainHouse,
+      similarHouses: similarHouses,
     });
   } catch (error) {
     console.error("Error while fetching house:", error);
@@ -301,42 +320,101 @@ const gethousebyid = async (req, res, next) => {
   }
 };
 
+// const assignBrokerToHouse = async (req, res) => {
+//   try {
+//     const { houseId, Email } = req.params;
+
+//     const house = await House.findById(houseId);
+//     if (!house) {
+//       return res
+//         .status(404)
+//         .json({ success: false, error: "House not found." });
+//     }
+
+//     const broker = await User.findOne({ Email: Email });
+//     if (!broker) {
+//       return res
+//         .status(404)
+//         .json({ success: false, error: "Broker not found." });
+//     }
+
+//     if (!isAuthorizedToAssign(broker)) {
+//       return res.status(403).json({
+//         success: false,
+//         error: "Broker is not authorized to be assigned.",
+//       });
+//     }
+
+//     house.Broker = broker.Email;
+//     await house.save();
+//     const message = `You have been assigned to house ${houseId} by your broker manager.`;
+//     await NotificationService.sendNotification(broker.Email, message);
+//     res.json({
+//       success: true,
+//       message: "Broker assigned successfully.",
+//       data: house,
+//     });
+//   } catch (error) {
+//     console.error("Error assigning broker to house:", error);
+//     res.status(500).json({ success: false, error: "Internal Server Error" });
+//   }
+// };
+
 const assignBrokerToHouse = async (req, res) => {
   try {
     const { houseId, Email } = req.params;
-
     const house = await House.findById(houseId);
+
     if (!house) {
       return res
         .status(404)
-        .json({ success: false, error: "House not found." });
+        .json({ success: false, error: "house not found." });
     }
 
     const broker = await User.findOne({ Email: Email });
+
     if (!broker) {
       return res
         .status(404)
         .json({ success: false, error: "Broker not found." });
     }
 
-    if (!isAuthorizedToAssign(broker)) {
-      return res.status(403).json({
-        success: false,
-        error: "Broker is not authorized to be assigned.",
-      });
-    }
-
-    house.Broker = broker.Email;
+    house.Broker = broker._id;
     await house.save();
-    const message = `You have been assigned to house ${houseId} by your broker manager.`;
-    await NotificationService.sendNotification(broker.Email, message);
+    const message = `You have been assigned.`;
     res.json({
       success: true,
       message: "Broker assigned successfully.",
       data: house,
     });
   } catch (error) {
-    console.error("Error assigning broker to house:", error);
+    console.error("Error assigning broker to vehicle:", error);
+    res.status(500).json({ success: false, error: "Internal Server Error" });
+  }
+};
+
+const approveHouseStatus = async (req, res) => {
+  const { houseId } = req.params;
+
+  try {
+    const house = await House.findByIdAndUpdate(
+      houseId,
+      { Status: "Approved" },
+      { new: true }
+    );
+
+    if (!house) {
+      return res
+        .status(404)
+        .json({ success: false, error: "House not found." });
+    }
+    res.json({
+      success: true,
+      message: "Property is Approved successfully.",
+      data: house,
+    });
+  } catch (error) {
+    console.error("Error updating property status:", error);
     res.status(500).json({ success: false, error: "Internal Server Error" });
   }
 };
@@ -425,8 +503,8 @@ const isAuthorizedToApprove = (User) => {
 const isAuthorizedToReject = (User) => {
   return User && User.Role === "BrokerAdmin";
 };
-const isAuthorizedToAssign = (User) => {
-  return User && User.Role === "Agent";
+const isAuthorizedToroker = (User) => {
+  return User && User.Role === "Broker";
 };
 
 module.exports = {
@@ -438,4 +516,5 @@ module.exports = {
   rejectHouse,
   approveHouse,
   assignBrokerToHouse,
+  approveHouseStatus,
 };

@@ -23,15 +23,14 @@ const VehicleSchema = new Schema(
     },
     ContractType: {
       type: String,
-      required: [true, "ContractType is required!"],
     },
     Currency:{
       type:String,
   },
  
     Location: {
-      lat: { type: Number, required: true },
-      lng: { type: Number, required: true }
+      lat: { type: Number },
+      lng: { type: Number }
   },
   PriceCategory: {
     type: String,
@@ -39,30 +38,25 @@ const VehicleSchema = new Schema(
     
     Colour: {
       type: String,
-      required: [true, "required!"],
     },
     Transmission: {
       type: String,
-      required: [true, "required"],
     },
     ManufacturingYear: {
       type: Number,
-      required: [true, "required"],
     },
     Price: {
       type: Number,
-      required: [true, "required!"],
     },
     Description: {
       type: String,
-      required: [true, "required!"],
     },
     Rating: {
       type: Number,
     },
     Status: {
       type: String,
-      enum: ["Pending", "Approved", "Rejected"],
+      enum: ["Pending","Assigned", "Approved", "Rejected"],
       default: "Pending",
     },
     approvedBy: {
@@ -82,6 +76,7 @@ const VehicleSchema = new Schema(
     },
     imageUrls: [String],
     documentUrls: [String],
+    agreementDocUrl: [String],
   },
   { timestamps: true }
 );

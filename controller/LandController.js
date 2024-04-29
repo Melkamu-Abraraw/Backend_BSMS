@@ -17,11 +17,11 @@ const uploadland = async (req, res) => {
     const locationString = req.body.Location;
     locationObject = JSON.parse(locationString);
 
-    console.log('Latitude:', locationObject.lat);
-    console.log('Longitude:', locationObject.lng);
-} catch (error) {
-    console.error('Error parsing location:', error);
-}
+    console.log("Latitude:", locationObject.lat);
+    console.log("Longitude:", locationObject.lng);
+  } catch (error) {
+    console.error("Error parsing location:", error);
+  }
 
   try {
     const imageUrls = [];
@@ -39,7 +39,12 @@ const uploadland = async (req, res) => {
     }
     const uploadPromises = req.files
       .filter((file) => {
-        const allowedTypes = ["image/jpeg", "image/jpg", "image/png","multipart/form-data"];
+        const allowedTypes = [
+          "image/jpeg",
+          "image/jpg",
+          "image/png",
+          "multipart/form-data",
+        ];
         return allowedTypes.includes(file.mimetype);
       })
       .map((file) => {
@@ -103,7 +108,7 @@ const uploadland = async (req, res) => {
         });
       });
 
-    console.log(req.body.Location)
+    console.log(req.body.Location);
     await Promise.all(uploadPromises);
     await Promise.all(uploadDocumentPromises);
     const token = req.headers.authorization;
@@ -115,7 +120,7 @@ const uploadland = async (req, res) => {
     }
 
     const decodedToken = jwt.verify(token.split(" ")[1], "AZQ,PI)0(");
-    console.log(decodedToken)
+    console.log(decodedToken);
 
     if (!decodedToken) {
       return res.status(401).json({ success: false, error: "Invalid token." });
@@ -123,24 +128,24 @@ const uploadland = async (req, res) => {
     const userEmail = decodedToken.Email;
 
     const newland = new Land({
-      Title:req.body.title,
+      Title: req.body.title,
       ContractType: req.body.ContractType,
       Area: req.body.Area,
       City: req.body.City,
       Description: req.body.Description,
-      PriceCategory:req.body.PriceCategory,
-      Currency:req.body.Currency,
+      PriceCategory: req.body.PriceCategory,
+      Currency: req.body.Currency,
       Price: req.body.Price,
       imageUrls: imageUrls,
       UploadedBy: userEmail,
       documentUrls: documentUrls,
-      Location:locationObject
+      Location: locationObject,
     });
 
     const savedland = await newland.save();
     res.json({
       success: true,
-      message: "Land information added successfully",
+      message: "Land Information added Successfully",
       data: {
         newland: savedland,
       },

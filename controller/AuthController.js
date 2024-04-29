@@ -16,6 +16,24 @@ cloudinary.config({
   api_secret: "iTi78ih5itaEnbiFF8oc7raVbvw",
 });
 
+const listUser = (req, res, next) => {
+  User.find({ Role: "User" })
+    .then((users) => {
+      if (!users) {
+        return res
+          .status(404)
+          .json({ message: "No users found with the role of User" });
+      }
+      res.json({ users });
+    })
+    .catch((error) => {
+      console.error("Error fetching users:", error);
+      res
+        .status(500)
+        .json({ message: "An error occurred while fetching users" });
+    });
+};
+
 const userRegister = async (req, res, next) => {
   try {
     bcrypt.hash(req.body.Password, 10, async (err, hashedPass) => {
@@ -79,30 +97,24 @@ const userRegister = async (req, res, next) => {
         !/^[a-zA-Z]+$/.test(req.body.FirstName) ||
         !/^[a-zA-Z]+$/.test(req.body.LastName)
       ) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "First name and last name must contain only letters.",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "First name and last name must contain only letters.",
+        });
       }
       if (req.body.Password.length < 8) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Password must be at least 8 characters long.",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "Password must be at least 8 characters long.",
+        });
       }
 
       if (!/^\d+$/.test(req.body.Phone) || req.body.Phone.length > 10) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message:
-              "Phone number must contain only numbers and not exceed 10 digits.",
-          });
+        return res.status(400).json({
+          success: false,
+          message:
+            "Phone number must contain only numbers and not exceed 10 digits.",
+        });
       }
       if (
         !/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/.test(
@@ -116,12 +128,10 @@ const userRegister = async (req, res, next) => {
 
       const existingUser = await User.findOne({ Email: req.body.Email });
       if (existingUser) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Email address is already in use.",
-          });
+        return res.json({
+          success: false,
+          message: "Email address is already in use.",
+        });
       }
 
       const user = new User({
@@ -138,7 +148,8 @@ const userRegister = async (req, res, next) => {
       const usersaved = await user.save();
 
       res.json({
-        message: "User Added Successfully",
+        success: true,
+        message: "Registration is Successfull",
         data: usersaved,
       });
     });
@@ -213,51 +224,41 @@ const agentRegister = async (req, res, next) => {
           .json({ success: false, message: "All fields are required." });
       }
       if (req.body.Password.length < 8) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Password must be at least 8 characters long.",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "Password must be at least 8 characters long.",
+        });
       }
 
       const existingUser = await User.findOne({ Email: req.body.Email });
       if (existingUser) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Email address is already in use.",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "Email address is already in use.",
+        });
       }
       if (
         !/^[a-zA-Z]+$/.test(req.body.FirstName) ||
         !/^[a-zA-Z]+$/.test(req.body.LastName)
       ) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "First name and last name must contain only letters.",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "First name and last name must contain only letters.",
+        });
       }
       if (req.body.Password.length < 8) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Password must be at least 8 characters long.",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "Password must be at least 8 characters long.",
+        });
       }
 
       if (!/^\d+$/.test(req.body.Phone) || req.body.Phone.length > 10) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message:
-              "Phone number must contain only numbers and not exceed 10 digits.",
-          });
+        return res.status(400).json({
+          success: false,
+          message:
+            "Phone number must contain only numbers and not exceed 10 digits.",
+        });
       }
       if (
         !/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/.test(
@@ -340,17 +341,15 @@ const brokerAdminRegister = (req, res, next) => {
       });
 
       await Promise.all(uploadPromises);
-      
+
       const existingUser = await User.findOne({ Email: req.body.Email });
       if (existingUser) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Email address is already in use.",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "Email address is already in use.",
+        });
       }
-     
+
       let user = new User({
         FirstName: req.body.FirstName,
         LastName: req.body.LastName,
@@ -434,51 +433,41 @@ const adminRegister = (req, res, next) => {
           .json({ success: false, message: "All fields are required." });
       }
       if (req.body.Password.length < 8) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Password must be at least 8 characters long.",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "Password must be at least 8 characters long.",
+        });
       }
 
       const existingUser = await User.findOne({ Email: req.body.Email });
       if (existingUser) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Email address is already in use.",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "Email address is already in use.",
+        });
       }
       if (
         !/^[a-zA-Z]+$/.test(req.body.FirstName) ||
         !/^[a-zA-Z]+$/.test(req.body.LastName)
       ) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "First name and last name must contain only letters.",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "First name and last name must contain only letters.",
+        });
       }
       if (req.body.Password.length < 8) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Password must be at least 8 characters long.",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "Password must be at least 8 characters long.",
+        });
       }
 
       if (!/^\d+$/.test(req.body.Phone) || req.body.Phone.length > 10) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message:
-              "Phone number must contain only numbers and not exceed 10 digits.",
-          });
+        return res.status(400).json({
+          success: false,
+          message:
+            "Phone number must contain only numbers and not exceed 10 digits.",
+        });
       }
       if (
         !/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/.test(
@@ -516,7 +505,7 @@ const adminRegister = (req, res, next) => {
 };
 
 const list = (req, res, next) => {
-  User.find()
+  User.find({ Role: "User" })
     .then((response) => {
       res.json({
         response,
@@ -528,29 +517,51 @@ const list = (req, res, next) => {
       });
     });
 };
+const listManager = (req, res, next) => {
+  User.find({ Role: "BrokerAdmin" }) // Filter users by role "BrokerAdmin"
+    .then((users) => {
+      if (!users) {
+        return res
+          .status(404)
+          .json({ message: "No users found with the role of BrokerAdmin" });
+      }
+      res.json({ users });
+    })
+    .catch((error) => {
+      console.error("Error fetching users:", error);
+      res
+        .status(500)
+        .json({ message: "An error occurred while fetching users" });
+    });
+};
 const update = (req, res, next) => {
-  let userID = req.body.userID;
+  const { id } = req.params;
+
   let updatedData = {
-    FirstName: req.body.FirstName,
-    LastName: req.body.LastName,
-    Email: req.body.Email,
-    Phone: req.body.Phone,
+    FirstName: req.body.firstName,
+    LastName: req.body.lastName,
+    Phone: req.body.phone,
   };
-  User.findByIdAndUpdate(userID, { $set: updatedData })
-    .then(() => {
-      res.json({
-        message: "User updated Successfully!",
+
+  User.findByIdAndUpdate(id, { $set: updatedData }, { new: true }) // Add { new: true } to return the updated document
+    .then((updatedUser) => {
+      res.status(200).json({
+        message: "User Updated Successfully!",
+        user: updatedUser, // Send back the updated user data
       });
     })
     .catch((error) => {
-      res.json({
+      res.status(500).json({
         message: "An error occurred!",
+        error: error.message,
       });
     });
 };
+
 const Remove = (req, res, next) => {
-  let userID = req.body.userID;
-  User.findOneAndDelete(userID)
+  const { id } = req.params;
+
+  User.findOneAndDelete(id)
     .then(() => {
       res.json({
         message: "User deleted successfully!",
@@ -564,42 +575,44 @@ const Remove = (req, res, next) => {
 };
 
 const login = (req, res, next) => {
-  let username = req.body.username;
-  let password = req.body.Password;
-
-  User.findOne({ $or: [{ Email: username }, { Phone: username }] })
+  User.findOne({ Email: req.body.Email })
     .then((User) => {
       if (User) {
-        bcrypt.compare(password, User.Password, function (err, result) {
-          if (err) {
-            res.json({
-              error: err,
-            });
-          } else {
-            if (result) {
-              let token = jwt.sign({ Email: User.Email }, "AZQ,PI)0(", {
-                expiresIn: "24h",
-              });
-              // Assuming `token` is the variable containing the token
-              // and `User` is the variable containing user data
-
-              // Create a new object combining the token and user data
-              const responseData = {
-                message: "Login Successful",
-                token: token,
-                user: User, // Assuming User contains user data
-              };
-
+        bcrypt.compare(
+          req.body.Password,
+          User.Password,
+          function (err, result) {
+            if (err) {
               res.json({
-                responseData,
+                error: err,
               });
             } else {
-              res.json({
-                message: "Password does not Matched!",
-              });
+              if (result) {
+                let token = jwt.sign(
+                  { Email: User.Email, Id: User._id },
+                  "AZQ,PI)0(",
+                  {
+                    expiresIn: "24h",
+                  }
+                );
+
+                const responseData = {
+                  message: "Login Successful",
+                  token: token,
+                  user: User,
+                };
+
+                res.json({
+                  responseData,
+                });
+              } else {
+                res.json({
+                  message: "Password does not Matched!",
+                });
+              }
             }
           }
-        });
+        );
       } else {
         res.json({
           message: "No user Found!",
@@ -615,6 +628,25 @@ const login = (req, res, next) => {
     });
 };
 const blacklistedTokens = [];
+
+const listBroker = (req, res, next) => {
+  User.find({ Role: "Broker" }) // Filter users by role "BrokerAdmin"
+    .then((users) => {
+      if (!users) {
+        return res
+          .status(404)
+          .json({ message: "No users found with the role of Broker" });
+      }
+      console.log(users);
+      res.json({ users });
+    })
+    .catch((error) => {
+      console.error("Error fetching users:", error);
+      res
+        .status(500)
+        .json({ message: "An error occurred while fetching users" });
+    });
+};
 
 const logout = (req, res) => {
   const token = req.header("Authorization");
@@ -632,12 +664,10 @@ const initiatePassword = async (req, res) => {
     await initiatePasswordReset(req, res);
   } catch (error) {
     console.error("Error in initiatePasswordResetController:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "An error occurred during password reset initiation.",
-      });
+    res.status(500).json({
+      success: false,
+      message: "An error occurred during password reset initiation.",
+    });
   }
 };
 
@@ -646,39 +676,33 @@ const completePassword = async (req, res) => {
     await completePasswordReset(req, res);
   } catch (error) {
     console.error("Error in completePasswordResetController:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "An error occurred during password reset completion.",
-      });
+    res.status(500).json({
+      success: false,
+      message: "An error occurred during password reset completion.",
+    });
   }
 };
 const getUserById = async (req, res, next) => {
-  try {
-    let userid = req.params.userid;
-
-    const user = await User.findById(userid);
-
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found." });
-    }
-
-    res.json({
-      success: true,
-      data: user,
-    });
-  } catch (error) {
-    console.error("Error while fetching user:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "An error occurred while fetching user.",
-      });
-  }
+  console.log(req.body);
+  // try {
+  //   let userid = req.params.userid;
+  //   const user = await User.findById(userid);
+  //   if (!user) {
+  //     return res
+  //       .status(404)
+  //       .json({ success: false, message: "User not found." });
+  //   }
+  //   res.json({
+  //     success: true,
+  //     data: user,
+  //   });
+  // } catch (error) {
+  //   console.error("Error while fetching user:", error);
+  //   res.status(500).json({
+  //     success: false,
+  //     message: "An error occurred while fetching user.",
+  //   });
+  // }
 };
 
 module.exports = {
@@ -687,6 +711,7 @@ module.exports = {
   brokerAdminRegister,
   adminRegister,
   list,
+  listManager,
   update,
   Remove,
   login,
@@ -694,4 +719,6 @@ module.exports = {
   completePassword,
   initiatePassword,
   getUserById,
+  listUser,
+  listBroker,
 };

@@ -39,6 +39,7 @@ router.put(
   authenticate,
   houseController.approveHouse
 );
+router.put("/approve/:houseId", houseController.approveHouseStatus);
 router.put(
   "/reject/:houseId/:Email",
   authenticate,
@@ -46,8 +47,8 @@ router.put(
 );
 router.put(
   "/assign/:houseId/:Email",
-  verifyToken,
-  isBrokerAdmin,
+  // verifyToken,
+  // isBrokerAdmin,
   houseController.assignBrokerToHouse
 );
 module.exports = router;

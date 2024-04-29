@@ -35,8 +35,16 @@ router.put(
   vehiclecontroller.updatevehicle
 );
 router.put(
-  "/approve/:vehicleId/:Email",
-  authenticate,
+  "/approve/:vehicleId",
+  (req, res, next) => {
+    uploadfiles(req, res, (err) => {
+      if (err) {
+        console.error(err);
+        return res.status(400).json({ success: false, error: err.message });
+      }
+      next();
+    });
+  },
   vehiclecontroller.approveVehicle
 );
 router.put(
@@ -46,8 +54,6 @@ router.put(
 );
 router.put(
   "/assign/:vehicleId/:Email",
-  verifyToken,
-  isBrokerAdmin,
   vehiclecontroller.assignBrokerToVehicle
 );
 module.exports = router;

@@ -9,4 +9,4 @@ router.post('/brokerCompanyRegister',BrokercompaniesController.BrokerCompaRegist
 router.post('/updatebrokercompanies',BrokercompaniesController.updatebrokercompanies)
 router.post('/Removebrokercompanies',BrokercompaniesController.Removebrokercompanies)
 
- module.exports = router
+module.exports = router
