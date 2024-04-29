@@ -9,38 +9,77 @@ cloudinary.config({
   api_secret: "iTi78ih5itaEnbiFF8oc7raVbvw",
 });
 
+//single Employee fetch controller
+const getEmployee = async (req, res) => {
+  try {
+    const { EmployeeId } = req.params;
+    if (EmployeeId) {
+      const getEmp = await Employee.findById(EmployeeId);
+      if (getEmp) {
+        return res.status(200).json(getEmp);
+      } else {
+        return res.status(404).json({ error: "Employee not found" });
+      }
+    } else {
+      return res.status(400).json({ error: "Employee ID not provided" });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+//All Employee fetch controller
+const showemployee = (req, res, next) => {
+  Employee.find()
+    .then((response) => {
+      res.json({
+        response,
+      });
+    })
+    .catch((error) => {
+      res.json({
+        message: "An error Occured!",
+      });
+    });
+};
+
+//Employee regestration controller
 const addemployee = async (req, res) => {
   try {
-    const imageUrls = [];
-    const relativeImageUrls = [];
+    const EmpAvatar = [];
+    const RelAvatar = [];
 
     if (!req.files || req.files.length === 0) {
       return res
         .status(400)
         .json({ success: false, error: "No files uploaded." });
     }
-    if (req.files.length > 4) {
+    if (req.files.length > 2) {
       return res
         .status(400)
-        .json({ success: false, error: "Maximum of 3 files allowed." });
+        .json({ success: false, error: "Maximum of 2 files allowed." });
     }
-    const uploadPromises = req.files
-      .filter((file) => {
-        const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
-        return allowedTypes.includes(file.mimetype);
-      })
-      .map((file) => {
-        return new Promise((resolve, reject) => {
-          if (file.size > 10485760) {
+
+    const uploadPromises = req.files.map((file) => {
+      return new Promise((resolve, reject) => {
+        if (file.size > 10485760) {
+          reject({
+            success: false,
+            error: `File ${file.originalname} is too large. Maximum size is 10 MB.`,
+          });
+        } else {
+          const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
+          if (!allowedTypes.includes(file.mimetype)) {
             reject({
               success: false,
-              error: `File ${file.originalname} is too large. Maximum size is 10 MB.`,
+              error: `File type ${file.mimetype} not supported. Only JPEG, JPG, and PNG are allowed.`,
             });
-          } else {
-            const folder = "EmployeeID";
+            return;
+          }
 
-            const stream = cloudinary.uploader.upload_stream(
-              { resource_type: "auto", folder: folder },
+          if (file.fieldname === "EmpAvatar") {
+            const empstream = cloudinary.uploader.upload_stream(
+              { resource_type: "auto", folder: "EmployeeID" },
               (error, result) => {
                 if (error) {
                   console.error("Error uploading to Cloudinary:", error);
@@ -49,32 +88,15 @@ const addemployee = async (req, res) => {
                     error: "Error uploading to Cloudinary",
                   });
                 }
-                imageUrls.push(result.secure_url);
+                EmpAvatar.push(result.secure_url);
                 resolve();
               }
             );
 
-            streamifier.createReadStream(file.buffer).pipe(stream);
-          }
-        });
-      });
-    const uploadImagesPromises = req.files
-      .filter((file) => {
-        const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
-        return allowedTypes.includes(file.mimetype);
-      })
-      .map((file) => {
-        return new Promise((resolve, reject) => {
-          if (file.size > 10485760) {
-            reject({
-              success: false,
-              error: `File ${file.originalname} is too large. Maximum size is 10 MB.`,
-            });
-          } else {
-            const folder = "EmployeeRelativeID";
-
-            const stream = cloudinary.uploader.upload_stream(
-              { resource_type: "auto", folder: folder },
+            streamifier.createReadStream(file.buffer).pipe(empstream);
+          } else if (file.fieldname === "RelAvatar") {
+            const relstream = cloudinary.uploader.upload_stream(
+              { resource_type: "auto", folder: "EmployeeRelativeID" },
               (error, result) => {
                 if (error) {
                   console.error("Error uploading to Cloudinary:", error);
@@ -83,33 +105,33 @@ const addemployee = async (req, res) => {
                     error: "Error uploading to Cloudinary",
                   });
                 }
-                relativeImageUrls.push(result.secure_url);
+                RelAvatar.push(result.secure_url);
                 resolve();
               }
             );
 
-            streamifier.createReadStream(file.buffer).pipe(stream);
+            streamifier.createReadStream(file.buffer).pipe(relstream);
           }
-        });
+        }
       });
-    await Promise.all(uploadImagesPromises);
+    });
+
     await Promise.all(uploadPromises);
 
     const newEmployee = new Employee({
-      Name: req.body.Name,
+      EmpAvatar: EmpAvatar,
+      FullName: req.body.FullName,
+      Age: req.body.Age,
       Gender: req.body.Gender,
-      DOB: req.body.DOB,
-      phone: req.body.phone,
+      Phone: req.body.Phone,
+      Address: req.body.Address,
       JobType: req.body.JobType,
       Experience: req.body.Experience,
-      Skill: req.body.Skill,
-      Description: req.body.Description,
+      RelAvatar: RelAvatar,
       RelativeName: req.body.RelativeName,
       RelativePhone: req.body.RelativePhone,
       RelativeAddress: req.body.RelativeAddress,
       Relationship: req.body.Relationship,
-      relativeImageUrls: relativeImageUrls,
-      imageUrls: imageUrls,
     });
 
     const savedEmployee = await newEmployee.save();
@@ -127,22 +149,114 @@ const addemployee = async (req, res) => {
   }
 };
 
-const showemployee = (req, res, next) => {
-  Employee.find()
-    .then((response) => {
-      res.json({
-        response,
+//Employeee Update controller
+const updateemployee = async (req, res) => {
+  try {
+    const { EmployeeId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(EmployeeId)) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Invalid EmployeeId." });
+    }
+
+    const prevEmployee = await Employee.findById(EmployeeId);
+
+    if (!prevEmployee) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Employee not found." });
+    }
+
+    const updateEmpData = {
+      FullName: req.body.FullName || prevEmployee.FullName,
+      Age: req.body.Age || prevEmployee.Age,
+      Gender: req.body.Gender || prevEmployee.Gender,
+      Phone: req.body.Phone || prevEmployee.Phone,
+      Address: req.body.Address || prevEmployee.Address,
+      JobType: req.body.JobType || prevEmployee.JobType,
+      Experience: req.body.Experience || prevEmployee.Experience,
+      RelativeName: req.body.RelativeName || prevEmployee.RelativeName,
+      RelativePhone: req.body.RelativePhone || prevEmployee.RelativePhone,
+      RelativeAddress: req.body.RelativeAddress || prevEmployee.RelativeAddress,
+      Relationship: req.body.Relationship || prevEmployee.Relationship,
+    };
+
+    const empAvatarFiles = req.files["EmpAvatar"];
+    const relAvatarFiles = req.files["RelAvatar"];
+
+    const uploadAndSavePromises = [];
+
+    if (empAvatarFiles && empAvatarFiles.length > 0) {
+      const empUploadPromise = new Promise((resolve, reject) => {
+        const empAvatar = empAvatarFiles[0];
+        const empStream = cloudinary.uploader.upload_stream(
+          { resource_type: "auto", folder: "EmployeeID" },
+          (error, result) => {
+            if (error) {
+              console.error("Error uploading EmpAvatar to Cloudinary:", error);
+              reject(error);
+            } else {
+              updateEmpData.EmpAvatar = [result.secure_url];
+              resolve();
+            }
+          }
+        );
+        streamifier.createReadStream(empAvatar.buffer).pipe(empStream);
       });
-    })
-    .catch((error) => {
-      res.json({
-        message: "An error Occured!",
+      uploadAndSavePromises.push(empUploadPromise);
+    }
+
+    if (relAvatarFiles && relAvatarFiles.length > 0) {
+      const relUploadPromise = new Promise((resolve, reject) => {
+        const relAvatar = relAvatarFiles[0];
+        const relStream = cloudinary.uploader.upload_stream(
+          { resource_type: "auto", folder: "EmployeeRelativeID" },
+          (error, result) => {
+            if (error) {
+              console.error("Error uploading RelAvatar to Cloudinary:", error);
+              reject(error);
+            } else {
+              updateEmpData.RelAvatar = [result.secure_url];
+              resolve();
+            }
+          }
+        );
+        streamifier.createReadStream(relAvatar.buffer).pipe(relStream);
       });
+      uploadAndSavePromises.push(relUploadPromise);
+    }
+
+    await Promise.all(uploadAndSavePromises);
+    const updatedEmployee = await Employee.findByIdAndUpdate(
+      EmployeeId,
+      updateEmpData,
+      { new: true }
+    );
+
+    if (!updatedEmployee) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Employee not Updated." });
+    }
+
+    res.json({
+      success: true,
+      message: "Employee information updated successfully",
+      data: updatedEmployee,
     });
+  } catch (error) {
+    console.error("Server error:", error);
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, error: "Internal Server Error" });
+    }
+  }
 };
+
+//Employeee delete controller
 const deleteemployee = async (req, res) => {
   try {
-    const { EmployeeId } = req.body;
+    const { EmployeeId } = req.params;
 
     const deletedemployee = await Employee.findByIdAndDelete(EmployeeId);
 
@@ -165,94 +279,9 @@ const deleteemployee = async (req, res) => {
   }
 };
 
-const updateemployee = async (req, res) => {
-  try {
-    const { EmployeeId } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(EmployeeId)) {
-      return res
-        .status(400)
-        .json({ success: false, error: "Invalid EmployeeId." });
-    }
-
-    const updatedData = {
-      Name: req.body.Name,
-      phone: req.body.phone,
-      DOB: req.body.DOB,
-      Experience: req.body.Experience,
-      Gender: req.body.Gender,
-      JobType: req.body.JobType,
-      Skill: req.body.Skill,
-      Description: req.body.Description,
-      RelativeName: req.body.RelativeName,
-      RelativePhone: req.body.RelativePhone,
-      RelativeAddress: req.body.RelativeAddress,
-      Relationship: req.body.Relationship,
-    };
-
-    if (req.files && req.files.length > 0) {
-      const newImageUrls = [];
-      const uploadPromises = req.files.map((file) => {
-        return new Promise((resolve, reject) => {
-          if (file.size > 10485760) {
-            reject({
-              success: false,
-              error: `File ${file.originalname} is too large. Maximum size is 10 MB.`,
-            });
-          }
-
-          const folder = "EmployeeID";
-          const stream = cloudinary.uploader.upload_stream(
-            { resource_type: "auto", folder: folder },
-            (error, result) => {
-              if (error) {
-                console.error("Error uploading to Cloudinary:", error);
-                reject({
-                  success: false,
-                  error: "Error uploading to Cloudinary",
-                  file: file.originalname,
-                });
-              }
-              newImageUrls.push(result.secure_url);
-              resolve();
-            }
-          );
-
-          streamifier.createReadStream(file.buffer).pipe(stream);
-        });
-      });
-
-      await Promise.all(uploadPromises);
-      updatedData.imageUrls = newImageUrls;
-    }
-
-    const updatedemployee = await Employee.findByIdAndUpdate(
-      EmployeeId,
-      updatedData,
-      { new: true }
-    );
-
-    if (!updatedemployee) {
-      return res
-        .status(404)
-        .json({ success: false, error: "employee not found." });
-    }
-
-    res.json({
-      success: true,
-      message: "employee information updated successfully",
-      data: updatedemployee,
-    });
-  } catch (error) {
-    console.error("Server error:", error);
-    if (!res.headersSent) {
-      res.status(500).json({ success: false, error: "Internal Server Error" });
-    }
-  }
-};
-
 module.exports = {
   addemployee,
+  getEmployee,
   showemployee,
   deleteemployee,
   updateemployee,

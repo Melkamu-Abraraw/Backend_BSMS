@@ -276,7 +276,7 @@ const agentRegister = async (req, res, next) => {
         Phone: req.body.Phone,
         Password: hashedPass,
         ConfirmPassword: hashedPass,
-        Role: "Agent",
+        Role: "Broker",
         imageUrls: imageUrls,
       });
 
