@@ -1,4 +1,6 @@
 const User = require("../models/Users");
+const Chat = require("../models/Chat");
+const Message = require("../models/Message");
 const bcrypt = require("bcrypt");
 const { response } = require("express");
 const jwt = require("jsonwebtoken");
@@ -517,6 +519,103 @@ const list = (req, res, next) => {
       });
     });
 };
+
+/*CHAT*/
+
+//All Chat Users List
+const allChatUsers = async (req, res) => {
+  try {
+    const response = await User.find({ Role: { $in: ["Broker", "Seller"] } });
+    res.status(200).json(response);
+  } catch (err) {
+    console.error("Failed to get all users:", err);
+    res.status(500).json({ error: "Failed to get all users" });
+  }
+};
+
+// Search Users by Email, FristName and LristName
+const searchUsers = async (req, res, next) => {
+  try {
+    const { query } = req.query;
+
+    const searchedUsers = await User.find({
+      Role: { $in: ["Broker", "Seller"] },
+      $or: [
+        { FirstName: { $regex: query, $options: "i" } },
+        { LastName: { $regex: query, $options: "i" } },
+      ],
+    });
+
+    res.status(200).json(searchedUsers);
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "An error occurred while searching for users" });
+  }
+};
+
+// All chats of a single user
+const getAllChats = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+
+    const allChats = await Chat.find({ members: userId })
+      .sort({ lastMessageAt: -1 })
+      .populate({
+        path: "members",
+        model: User,
+      })
+      .populate({
+        path: "messages",
+        model: Message,
+        populate: {
+          path: "sender seenBy",
+          model: User,
+        },
+      })
+      .exec();
+
+    res.status(200).json(allChats);
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Failed to get all chats of current user" });
+  }
+};
+
+// Search All chats
+const searchChats = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const { query } = req.query;
+
+    const searchedChats = await Chat.find({
+      members: userId,
+      name: { $regex: query, $options: "i" },
+    })
+      .populate({
+        path: "members",
+        model: User,
+      })
+      .populate({
+        path: "messages",
+        model: Message,
+        populate: {
+          path: "sender seenBy",
+          model: User,
+        },
+      })
+      .exec();
+
+    res.status(200).json(searchedChats);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to search chat" });
+  }
+};
+
 const listManager = (req, res, next) => {
   User.find({ Role: "BrokerAdmin" }) // Filter users by role "BrokerAdmin"
     .then((users) => {
@@ -684,25 +783,25 @@ const completePassword = async (req, res) => {
 };
 const getUserById = async (req, res, next) => {
   console.log(req.body);
-  // try {
-  //   let userid = req.params.userid;
-  //   const user = await User.findById(userid);
-  //   if (!user) {
-  //     return res
-  //       .status(404)
-  //       .json({ success: false, message: "User not found." });
-  //   }
-  //   res.json({
-  //     success: true,
-  //     data: user,
-  //   });
-  // } catch (error) {
-  //   console.error("Error while fetching user:", error);
-  //   res.status(500).json({
-  //     success: false,
-  //     message: "An error occurred while fetching user.",
-  //   });
-  // }
+  try {
+    let userid = req.params.userid;
+    const user = await User.findById(userid);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    }
+    res.json({
+      success: true,
+      data: user,
+    });
+  } catch (error) {
+    console.error("Error while fetching user:", error);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while fetching user.",
+    });
+  }
 };
 
 module.exports = {
@@ -711,6 +810,10 @@ module.exports = {
   brokerAdminRegister,
   adminRegister,
   list,
+  allChatUsers,
+  searchUsers,
+  getAllChats,
+  searchChats,
   listManager,
   update,
   Remove,

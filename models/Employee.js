@@ -49,6 +49,10 @@ const EmployeeSchema = new Schema(
       type: String,
       required: [true, "Relationship is required"],
     },
+    Agent: {
+      type: String,
+      required: [true, "Agent is required"],
+    },
   },
   { timestamps: true }
 );

@@ -132,8 +132,8 @@ const addemployee = async (req, res) => {
       RelativePhone: req.body.RelativePhone,
       RelativeAddress: req.body.RelativeAddress,
       Relationship: req.body.Relationship,
+      Agent: req.body.Agent,
     });
-
     const savedEmployee = await newEmployee.save();
 
     res.json({
