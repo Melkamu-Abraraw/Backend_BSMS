@@ -10,7 +10,8 @@ const authenticate = require("../middleware/authenticate");
 router.get("/", authenticate, AuthController.list);
 router.get("/manager", AuthController.listManager);
 router.get("/broker", AuthController.listBroker);
-router.get("/:userid", AuthController.getUserById);
+//router.get("/:userid", AuthController.getUserById);
+
 router.post(
   "/userRegister",
   upload.array("images", 5),
@@ -31,6 +32,13 @@ router.post(
   upload.array("images", 5),
   AuthController.adminRegister
 );
+
+//Chat route for users
+router.get("/allChatUsers", AuthController.allChatUsers);
+router.get("/searchUsers", AuthController.searchUsers);
+router.get("/getAllChats/:userId", AuthController.getAllChats);
+router.get("/searchChats/:userId", AuthController.searchChats);
+
 router.get("/allUser", AuthController.listUser);
 router.post("/update/:id", AuthController.update);
 router.post("/remove/:id", AuthController.Remove);
