@@ -49,7 +49,7 @@ const HouseSchema = new Schema(
     },
     Status: {
       type: String,
-      enum: ["Pending", "Approved", "Rejected"],
+      enum: ["Pending", "Approved", "Rejected", "Assigned"],
       default: "Pending",
     },
 

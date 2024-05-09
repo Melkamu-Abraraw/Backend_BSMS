@@ -380,7 +380,9 @@ const assignBrokerToHouse = async (req, res) => {
     }
 
     house.Broker = broker._id;
+    house.Status = "Assigned";
     await house.save();
+
     const message = `You have been assigned.`;
     res.json({
       success: true,
@@ -459,29 +461,10 @@ const approveHouse = async (req, res) => {
 
 const rejectHouse = async (req, res) => {
   try {
-    const { houseId, Email } = req.params;
+    const { houseId } = req.params;
     const house = await House.findById(houseId);
 
-    const user = await User.findOne({ Email: Email });
-
-    if (!user) {
-      return res.status(404).json({ success: false, error: "User not found." });
-    }
-    if (!house) {
-      return res
-        .status(404)
-        .json({ success: false, error: "House not found." });
-    }
-
-    if (!isAuthorizedToReject(user)) {
-      return res.status(403).json({
-        success: false,
-        error: "User is not authorized to reject houses.",
-      });
-    }
-
     house.Status = "Rejected";
-    house.approvedBy = user._id;
 
     await house.save();
 

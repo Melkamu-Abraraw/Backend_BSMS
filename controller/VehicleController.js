@@ -393,29 +393,10 @@ const approveVehicle = async (req, res) => {
 
 const rejectVehicle = async (req, res) => {
   try {
-    const { vehicleId, Email } = req.params;
+    const { vehicleId } = req.params;
     const vehicle = await Vehicle.findById(vehicleId);
 
-    const user = await User.findOne({ Email: Email });
-
-    if (!user) {
-      return res.status(404).json({ success: false, error: "User not found." });
-    }
-    if (!vehicle) {
-      return res
-        .status(404)
-        .json({ success: false, error: "vehicle not found." });
-    }
-
-    if (!isAuthorizedToReject(user)) {
-      return res.status(403).json({
-        success: false,
-        error: "User is not authorized to reject houses.",
-      });
-    }
-
     vehicle.Status = "Rejected";
-    vehicle.approvedBy = user._id;
 
     await vehicle.save();
 

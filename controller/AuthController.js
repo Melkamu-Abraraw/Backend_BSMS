@@ -60,7 +60,6 @@ const userRegister = async (req, res, next) => {
           }
 
           const folder = "ProfilePicture";
-
           const stream = cloudinary.uploader.upload_stream(
             { resource_type: "auto", folder: folder },
             (error, result) => {
@@ -80,51 +79,6 @@ const userRegister = async (req, res, next) => {
         });
       });
       await Promise.all(uploadPromises);
-
-      if (
-        req.body.FirstName === "" ||
-        req.body.LastName.trim === "" ||
-        req.body.Password === "" ||
-        req.body.Email === "" ||
-        req.body.Phone === "" ||
-        req.body.ConfirmPassword === ""
-      ) {
-        return res
-          .status(400)
-          .json({ success: false, message: "All fields are required." });
-      }
-      if (
-        !/^[a-zA-Z]+$/.test(req.body.FirstName) ||
-        !/^[a-zA-Z]+$/.test(req.body.LastName)
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: "First name and last name must contain only letters.",
-        });
-      }
-      if (req.body.Password.length < 8) {
-        return res.status(400).json({
-          success: false,
-          message: "Password must be at least 8 characters long.",
-        });
-      }
-
-      if (!/^\d+$/.test(req.body.Phone) || req.body.Phone.length > 10) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "Phone number must contain only numbers and not exceed 10 digits.",
-        });
-      }
-      if (
-        !/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/.test(
-          req.body.Email
-        )
-      ) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid email address." });
-      }
 
       const existingUser = await User.findOne({ Email: req.body.Email });
       if (existingUser) {
@@ -364,7 +318,8 @@ const brokerAdminRegister = (req, res, next) => {
       const usersaved = await user.save();
 
       res.json({
-        message: "BrokerAdmin Added Successfully",
+        success: true,
+        message: "Registration is Successfull",
         data: usersaved,
       });
     });
@@ -518,20 +473,17 @@ const list = (req, res, next) => {
     });
 };
 const listManager = (req, res, next) => {
-  User.find({ Role: "BrokerAdmin" }) // Filter users by role "BrokerAdmin"
-    .then((users) => {
-      if (!users) {
-        return res
-          .status(404)
-          .json({ message: "No users found with the role of BrokerAdmin" });
-      }
-      res.json({ users });
+  User.find({ Role: "BrokerAdmin" })
+    .sort({ createdAt: -1 })
+    .then((response) => {
+      res.json({
+        response,
+      });
     })
     .catch((error) => {
-      console.error("Error fetching users:", error);
-      res
-        .status(500)
-        .json({ message: "An error occurred while fetching users" });
+      res.json({
+        message: "An error Occured!",
+      });
     });
 };
 const update = (req, res, next) => {
@@ -561,14 +513,23 @@ const update = (req, res, next) => {
 const Remove = (req, res, next) => {
   const { id } = req.params;
 
-  User.findOneAndDelete(id)
-    .then(() => {
+  User.findByIdAndDelete(id)
+    .then((user) => {
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+        });
+      }
       res.json({
+        success: true,
         message: "User deleted successfully!",
       });
     })
     .catch((error) => {
-      res.json({
+      console.error("Error occurred:", error);
+      res.status(500).json({
+        success: false,
         message: "An error occurred!",
       });
     });
@@ -637,7 +598,6 @@ const listBroker = (req, res, next) => {
           .status(404)
           .json({ message: "No users found with the role of Broker" });
       }
-      console.log(users);
       res.json({ users });
     })
     .catch((error) => {

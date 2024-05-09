@@ -4,6 +4,7 @@ const request = require("request");
 const fs = require("fs");
 
 module.exports.uploadOriginal = async (req, res) => {
+  console.log(req.body);
   let options = {
     method: "POST",
     url: "https://api.signeasy.com/v3/original/",

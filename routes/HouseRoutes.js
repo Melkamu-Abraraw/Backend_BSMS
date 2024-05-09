@@ -40,11 +40,7 @@ router.put(
   houseController.approveHouse
 );
 router.put("/approve/:houseId", houseController.approveHouseStatus);
-router.put(
-  "/reject/:houseId/:Email",
-  authenticate,
-  houseController.rejectHouse
-);
+router.put("/reject/:houseId", houseController.rejectHouse);
 router.put(
   "/assign/:houseId/:Email",
   // verifyToken,

@@ -176,6 +176,7 @@ const fetchProperty = async (req, res) => {
       .json({ success: false, error: "An error occurred while fetching data" });
   }
 };
+
 const pendingProperty = async (req, res) => {
   try {
     const [houses, lands, vehicles] = await Promise.all([
@@ -248,9 +249,8 @@ const fetchMyProperty = async (req, res) => {
     const brokerId = decodedToken.Id; // Assuming the broker ID is stored in the token under the key 'brokerId'
     const properties = await House.find({
       Broker: new mongoose.Types.ObjectId(brokerId),
-      Status: "Pending",
+      Status: "Assigned",
     });
-    console.log(properties);
     if (!properties || properties.length === 0) {
       return res
         .status(404)

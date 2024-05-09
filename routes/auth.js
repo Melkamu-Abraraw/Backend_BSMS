@@ -33,7 +33,7 @@ router.post(
 );
 router.get("/allUser", AuthController.listUser);
 router.post("/update/:id", AuthController.update);
-router.post("/Remove", AuthController.Remove);
+router.post("/remove/:id", AuthController.Remove);
 router.post("/logout", AuthController.logout);
 router.post("/forgotpassword", AuthController.initiatePassword);
 router.post("/resetpass", AuthController.completePassword);

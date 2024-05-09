@@ -156,6 +156,7 @@ const Payment = async (req, res) => {
 };
 
 const verifyPayment = async (req, res) => {
+  console.log(req.body);
   if (req.body.status === "success") {
     const doc = await Doc.findOne({});
     console.log(doc);
@@ -174,31 +175,24 @@ const verifyPayment = async (req, res) => {
 
 const TranferMoney = () => {
   var options = {
-    method: "POST",
+    method: "GET",
     url: "https://api.chapa.co/v1/transfers",
     headers: {
       Authorization: "Bearer CHASECK_TEST-qdTEq6YnHFFhFIPBePj9z51xJV5Hv5d5",
-      "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      account_name: "Melkamu Abraraw",
-      account_number: 1000219391327,
+      account_name: "Israel Goytom",
+      account_number: "32423423",
       amount: "1",
       currency: "ETB",
-      beneficiary_name: "Israel Goytom",
       reference: "3241342142sfdd",
-      bank_code: "853d0598-9c01-41ab-ac99-48eab4da1513",
+      bank_code: "fe087651-4910-43af-b666-bbd393d8e81f",
     }),
   };
-
   request(options, function (error, response) {
     if (error) throw new Error(error);
-    try {
-      const jsonResponse = JSON.parse(response.body);
-      console.log(jsonResponse);
-    } catch (parseError) {
-      console.error("Error parsing JSON:", parseError);
-    }
+    const resp = JSON.parse(response.body);
+    console.log(resp);
   });
 };
 

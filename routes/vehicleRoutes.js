@@ -47,11 +47,7 @@ router.put(
   },
   vehiclecontroller.approveVehicle
 );
-router.put(
-  "/reject/:vehicleId/:Email",
-  authenticate,
-  vehiclecontroller.rejectVehicle
-);
+router.put("/reject/:vehicleId", vehiclecontroller.rejectVehicle);
 router.put(
   "/assign/:vehicleId/:Email",
   vehiclecontroller.assignBrokerToVehicle

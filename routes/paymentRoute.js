@@ -4,5 +4,5 @@ const paymentController = require("../controller/paymentController");
 
 router.post("/pay", paymentController.Payment);
 router.post("/verifyPayment", paymentController.verifyPayment);
-router.post("/transfer", paymentController.TranferMoney);
+router.get("/transfer", paymentController.TranferMoney);
 module.exports = router;
