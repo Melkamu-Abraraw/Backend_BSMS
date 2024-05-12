@@ -2,14 +2,12 @@ const User = require("../models/Users");
 const Chat = require("../models/Chat");
 const Message = require("../models/Message");
 const bcrypt = require("bcrypt");
-const { response } = require("express");
 const jwt = require("jsonwebtoken");
 const cloudinary = require("cloudinary").v2;
 const streamifier = require("streamifier");
 const {
   initiatePasswordReset,
   completePasswordReset,
-  sendResetEmail,
 } = require("../utils/email");
 
 cloudinary.config({
@@ -282,6 +280,7 @@ const brokerAdminRegister = (req, res, next) => {
     });
   }
 };
+
 const adminRegister = (req, res, next) => {
   try {
     bcrypt.hash(req.body.Password, 10, async (err, hashedPass) => {
@@ -431,7 +430,17 @@ const list = (req, res, next) => {
 //All Chat Users List
 const allChatUsers = async (req, res) => {
   try {
-    const response = await User.find({ Role: { $in: ["Broker", "Seller"] } });
+    const loggedInUserRole = req.headers.userrole;
+
+    let response;
+    if (loggedInUserRole === "User") {
+      response = await User.find({ Role: { $in: ["Broker", "User"] } });
+    } else if (loggedInUserRole === "Broker") {
+      response = await User.find({ Role: "User" });
+    } else {
+      return res.status(403).json({ error: "Unauthorized access" });
+    }
+
     res.status(200).json(response);
   } catch (err) {
     console.error("Failed to get all users:", err);
@@ -443,9 +452,19 @@ const allChatUsers = async (req, res) => {
 const searchUsers = async (req, res, next) => {
   try {
     const { query } = req.query;
+    const loggedInUserRole = req.headers.userrole;
 
+    let roleToQuery;
+
+    if (loggedInUserRole === "Broker") {
+      roleToQuery = ["User"];
+    } else if (loggedInUserRole === "User") {
+      roleToQuery = ["Broker", "User"];
+    } else {
+      return res.status(403).json({ error: "Unauthorized search" });
+    }
     const searchedUsers = await User.find({
-      Role: { $in: ["Broker", "Seller"] },
+      Role: { $in: roleToQuery },
       $or: [
         { FirstName: { $regex: query, $options: "i" } },
         { LastName: { $regex: query, $options: "i" } },
@@ -536,6 +555,7 @@ const listManager = (req, res, next) => {
       });
     });
 };
+
 const update = (req, res, next) => {
   const { id } = req.params;
 
@@ -545,12 +565,12 @@ const update = (req, res, next) => {
     Status: req.body.status,
   };
 
-  User.findByIdAndUpdate(id, { $set: updatedData }, { new: true }) // Add { new: true } to return the updated document
+  User.findByIdAndUpdate(id, { $set: updatedData }, { new: true })
     .then((updatedUser) => {
       res.status(200).json({
         success: true,
         message: "User Updated Successfully!",
-        user: updatedUser, // Send back the updated user data
+        user: updatedUser,
       });
     })
     .catch((error) => {
@@ -639,11 +659,12 @@ const login = (req, res, next) => {
       });
     });
 };
+
 const blacklistedTokens = [];
 
 const listBroker = (req, res, next) => {
   User.find({ Role: "Broker" })
-    .sort({ createdAt: -1 }) // Filter users by role "BrokerAdmin"
+    .sort({ createdAt: -1 })
     .then((users) => {
       if (!users) {
         return res
