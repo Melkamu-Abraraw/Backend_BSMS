@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-// Define the Chat Schema
 const ChatSchema = new Schema(
   {
     members: {

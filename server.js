@@ -1,23 +1,22 @@
 const express = require("express");
-var bodyParser = require("body-parser");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
-const url = "mongodb://0.0.0.0:27017/User";
 const app = express();
 dotenv.config();
 
-mongoose
-  .connect(url, {})
-  .then((_result) => console.log("database connected"))
-  .catch((err) => console.log(err));
-
+// const url = "mongodb://0.0.0.0:27017/User";
 // mongoose
-//   .connect(process.env.BSMS_MONGO_URL, {
-//     useNewUrlParser: true,
-//     useUnifiedTopology: true,
-//   })
+//   .connect(url, {})
 //   .then((_result) => console.log("database connected"))
 //   .catch((err) => console.log(err));
+
+mongoose
+  .connect(process.env.BSMS_MONGO_URL, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then((_result) => console.log("database connected"))
+  .catch((err) => console.log(err));
 
 const AuthRoute = require("./routes/auth");
 const docRoute = require("./routes/Doc");
@@ -28,8 +27,8 @@ const landRoutes = require("./routes/landRoutes");
 const employee = require("./routes/employeeRoutes");
 const Message = require("./routes/MessageRoute");
 const Chat = require("./routes/ChatRoute");
+const Notification = require("./routes/Notify");
 const paymentRoute = require("./routes/paymentRoute");
-const employeerelative = require("./routes/employeeRoutes");
 const Allproperty = require("./routes/Allproperty");
 const commissionroutes = require("./routes/commissionroutes");
 const cors = require("cors");
@@ -51,6 +50,7 @@ app.use("/api/Land", landRoutes);
 app.use("/api/Employee", employee);
 app.use("/api/Message", Message);
 app.use("/api/Chat", Chat);
+app.use("/api/Notification", Notification);
 app.use("/api/brokerCompanies", brokerCompaniesRoutes);
 app.use("/api/Allproperty", Allproperty);
 app.use("/api/commission", commissionroutes);
