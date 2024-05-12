@@ -1,13 +1,12 @@
 const express = require("express");
 const router = express.Router();
-
 const multer = require("multer");
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const AuthController = require("../controller/AuthController");
 const authenticate = require("../middleware/authenticate");
 
-router.get("/", authenticate, AuthController.list);
+router.get("/", AuthController.list);
 router.get("/manager", AuthController.listManager);
 router.get("/broker", AuthController.listBroker);
 //router.get("/:userid", AuthController.getUserById);

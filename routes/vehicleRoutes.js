@@ -34,20 +34,9 @@ router.put(
   upload.array("images", 3),
   vehiclecontroller.updatevehicle
 );
-router.put(
-  "/approve/:vehicleId",
-  (req, res, next) => {
-    uploadfiles(req, res, (err) => {
-      if (err) {
-        console.error(err);
-        return res.status(400).json({ success: false, error: err.message });
-      }
-      next();
-    });
-  },
-  vehiclecontroller.approveVehicle
-);
+
 router.put("/reject/:vehicleId", vehiclecontroller.rejectVehicle);
+router.put("/approve/:vehicleId", vehiclecontroller.approveVehicle);
 router.put(
   "/assign/:vehicleId/:Email",
   vehiclecontroller.assignBrokerToVehicle

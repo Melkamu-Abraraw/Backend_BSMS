@@ -5,6 +5,9 @@ const Doc = require("../models/Doc");
 const uuid = require("uuid");
 const path = require("path");
 const fs = require("fs");
+const { House } = require("../models/House");
+const { Land } = require("../models/Land");
+const { Vehicle } = require("../models/Vehicle");
 
 function generateRandomString() {
   const characters = "abcdefghijklmnopqrstuvwxyz";
@@ -29,16 +32,18 @@ function generateRandomString() {
 
 const Payment = async (req, res) => {
   const doc = await Doc.findOne({
-    $or: [
-      { sellerEmail: req.body.user.Email },
-      { buyerEmail: req.body.user.Email },
-    ],
+    $or: [{ sellerEmail: req.body.Email }, { buyerEmail: req.body.Email }],
   });
-  if (doc.length == 0) {
-    return res.status(404).json({ error: "Document Not Found" });
+
+  if (!doc) {
+    return res.json({
+      success: true,
+      docAvailable: false,
+    });
   }
 
   const pendNumber = Number(doc.pendingId);
+  const totalPrice = doc.price + doc.price * (2 / 100);
   const url = `https://api.signeasy.com/v3/rs/envelope/${pendNumber}`;
   const options = {
     method: "GET",
@@ -57,7 +62,6 @@ const Payment = async (req, res) => {
         json.recipients[1].status === "finalized" &&
         doc.paymentStatus === "Not Paid"
       ) {
-        console.log("here");
         var options = {
           method: "POST",
           url: "https://api.chapa.co/v1/transaction/initialize",
@@ -67,8 +71,8 @@ const Payment = async (req, res) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            amount: doc.price,
-            email: "wkusw203@gmail.com",
+            amount: totalPrice,
+            email: req.body.Email,
             currency: "ETB",
             tx_ref: generateRandomString(),
             return_url: "http://localhost:3000/dashboard/seller/",
@@ -77,9 +81,10 @@ const Payment = async (req, res) => {
         request(options, function (error, response) {
           if (error) throw new Error(error);
           const resp = JSON.parse(response.body);
-          console.log(resp);
           res.json({
             success: true,
+            docAvailable: true,
+            Doc: doc,
             paymentStatus: doc.paymentStatus,
             url: resp.data.checkout_url,
           });
@@ -103,7 +108,6 @@ const Payment = async (req, res) => {
         request(options, async function (error, response) {
           if (error) res.json({ error: error });
           let resp = JSON.parse(response.body);
-          console.log(resp.id);
           if (resp.id) {
             const doc = await Doc.findOne({});
             doc.signedId = resp.id;
@@ -138,13 +142,11 @@ const Payment = async (req, res) => {
 
               const pdfData = body;
               const base64PdfData = pdfData.toString("base64");
-              // const filename = `${uuid.v4()}.pdf`;
-              // const filePath = path.join(__dirname, "..", "pdfs", filename);
-              // fs.writeFileSync(filePath, pdfData, "binary");
-              // const pdfUrl = `http://localhost:3001/pdfs/${filename}`;
               res.json({
                 success: true,
+                docAvailable: true,
                 paymentStatus: doc.paymentStatus,
+                Doc: doc,
                 pdfBase64Data: base64PdfData,
               });
             });
@@ -154,9 +156,7 @@ const Payment = async (req, res) => {
     })
     .catch((err) => console.error("error:" + err));
 };
-
 const verifyPayment = async (req, res) => {
-  console.log(req.body);
   if (req.body.status === "success") {
     const doc = await Doc.findOne({});
     console.log(doc);
@@ -173,26 +173,64 @@ const verifyPayment = async (req, res) => {
   res.sendStatus(200);
 };
 
-const TranferMoney = () => {
+const TranferMoney = async (req, res) => {
+  console.log(req.body);
   var options = {
-    method: "GET",
+    method: "POST",
     url: "https://api.chapa.co/v1/transfers",
     headers: {
       Authorization: "Bearer CHASECK_TEST-qdTEq6YnHFFhFIPBePj9z51xJV5Hv5d5",
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      account_name: "Israel Goytom",
-      account_number: "32423423",
-      amount: "1",
+    body: {
+      account_name: req.body.Name,
+      account_number: req.body.Number,
+      amount: req.body.Price,
       currency: "ETB",
       reference: "3241342142sfdd",
-      bank_code: "fe087651-4910-43af-b666-bbd393d8e81f",
-    }),
+      bank_code: "96e41186-29ba-4e30-b013-2ca36d7e7025",
+    },
+    json: true,
   };
-  request(options, function (error, response) {
+
+  request(options, async function (error, response) {
     if (error) throw new Error(error);
-    const resp = JSON.parse(response.body);
-    console.log(resp);
+    if (response.body.status === "success") {
+      console.log(response.body);
+      try {
+        const doc = await Doc.findOne();
+        doc.paymentWithdraw = "Done";
+        await doc.save();
+        const propertyId = doc.PropertyId;
+        const property = await findProperty(propertyId);
+        if (property) {
+          property.Status = "Closed";
+          await property.save();
+          res.json({
+            success: true,
+            message: response.body.message,
+          });
+        } else {
+          throw new Error("Property not found");
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({
+          success: false,
+          message: "Error occurred while updating property status",
+        });
+      }
+    }
+    async function findProperty(propertyId) {
+      let property = await House.findOne({ _id: propertyId });
+      if (!property) {
+        property = await Land.findOne({ _id: propertyId });
+      }
+      if (!property) {
+        property = await Vehicle.findOne({ _id: propertyId });
+      }
+      return property;
+    }
   });
 };
 

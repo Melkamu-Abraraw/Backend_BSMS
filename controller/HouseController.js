@@ -18,9 +18,6 @@ const uploadImages = async (req, res) => {
   try {
     const locationString = req.body.Location;
     locationObject = JSON.parse(locationString);
-
-    console.log("Latitude:", locationObject.lat);
-    console.log("Longitude:", locationObject.lng);
   } catch (error) {
     console.error("Error parsing location:", error);
   }
@@ -279,7 +276,7 @@ const gethousebyid = async (req, res, next) => {
 
     const mainHouse = await House.findById(houseId).populate({
       path: "Broker",
-      select: "FirstName LastName Phone",
+      select: "FirstName LastName Phone imageUrls",
     });
 
     if (!mainHouse) {
@@ -288,17 +285,8 @@ const gethousebyid = async (req, res, next) => {
         .json({ success: false, message: "House not found." });
     }
     const similarHouses = await House.find({
-      _id: { $ne: mainHouse._id }, // Exclude the main house
-      Price: { $gte: mainHouse.Price - 1000, $lte: mainHouse.Price + 1000 }, // Adjust the price range as needed
-      // location: {
-      //   $near: {
-      //     $geometry: {
-      //       type: "Point",
-      //       coordinates: [mainHouse.location.coordinates[0], mainHouse.location.coordinates[1]],
-      //     },
-      //     $maxDistance: 10000, // Maximum distance in meters (adjust as needed)
-      //   },
-      // },
+      _id: { $ne: mainHouse._id },
+      Price: { $gte: mainHouse.Price - 100000, $lte: mainHouse.Price + 100000 }, // Adjust the price range as needed
     })
       .limit(3)
       .populate({
@@ -465,7 +453,6 @@ const rejectHouse = async (req, res) => {
     const house = await House.findById(houseId);
 
     house.Status = "Rejected";
-
     await house.save();
 
     res.json({

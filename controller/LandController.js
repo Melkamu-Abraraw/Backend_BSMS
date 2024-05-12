@@ -16,9 +16,6 @@ const uploadland = async (req, res) => {
   try {
     const locationString = req.body.Location;
     locationObject = JSON.parse(locationString);
-
-    console.log("Latitude:", locationObject.lat);
-    console.log("Longitude:", locationObject.lng);
   } catch (error) {
     console.error("Error parsing location:", error);
   }
@@ -120,7 +117,6 @@ const uploadland = async (req, res) => {
     }
 
     const decodedToken = jwt.verify(token.split(" ")[1], "AZQ,PI)0(");
-    console.log(decodedToken);
 
     if (!decodedToken) {
       return res.status(401).json({ success: false, error: "Invalid token." });
@@ -132,7 +128,7 @@ const uploadland = async (req, res) => {
       ContractType: req.body.ContractType,
       Area: req.body.Area,
       City: req.body.City,
-      Description: req.body.Description,
+      Description: req.body.description,
       PriceCategory: req.body.PriceCategory,
       Currency: req.body.Currency,
       Price: req.body.Price,
@@ -267,27 +263,36 @@ const updateland = async (req, res) => {
 const getlandbyid = async (req, res, next) => {
   try {
     let landID = req.params.landID;
-
-    const Landing = await Land.findById(landID).populate({
+    const mainLand = await Land.findById(landID).populate({
       path: "Broker",
-      select: "FirstName LastName Phone",
+      select: "FirstName LastName Phone imageUrls",
     });
 
-    if (!Landing) {
+    if (!mainLand) {
       return res
         .status(404)
         .json({ success: false, message: "Land not found." });
     }
+    const similarLand = await Land.find({
+      _id: { $ne: mainLand._id }, // Exclude the main house
+      Price: { $gte: mainLand.Price - 10000, $lte: mainLand.Price + 10000 }, // Adjust the price range as needed
+    })
+      .limit(3)
+      .populate({
+        path: "Broker",
+        select: "FirstName LastName Phone",
+      }); // Limit to 3 similar houses
 
     res.json({
       success: true,
-      data: Landing,
+      mainHouse: mainLand,
+      similarHouses: similarLand,
     });
   } catch (error) {
-    console.error("Error while fetching Land:", error);
+    console.error("Error while fetching house:", error);
     res.status(500).json({
       success: false,
-      message: "An error occurred while fetching Land.",
+      message: "An error occurred while fetching house.",
     });
   }
 };
@@ -329,37 +334,19 @@ const approveLand = async (req, res) => {
 
 const rejectLand = async (req, res) => {
   try {
-    const { landID, Email } = req.params;
+    const { landID } = req.params;
     const land = await Land.findById(landID);
 
-    const user = await User.findOne({ Email: Email });
-
-    if (!user) {
-      return res.status(404).json({ success: false, error: "User not found." });
-    }
-    if (!land) {
-      return res.status(404).json({ success: false, error: "land not found." });
-    }
-
-    if (!isAuthorizedToReject(user)) {
-      return res.status(403).json({
-        success: false,
-        error: "User is not authorized to reject land.",
-      });
-    }
-
     land.Status = "Rejected";
-    land.approvedBy = user._id;
-
     await land.save();
 
     res.json({
       success: true,
-      message: "Land rejected successfully.",
+      message: "Land Rejected successfully.",
       data: land,
     });
   } catch (error) {
-    console.error("Error rejecting land:", error);
+    console.error("Error rejecting house:", error);
     res.status(500).json({ success: false, error: "Internal Server Error" });
   }
 };
@@ -380,16 +367,8 @@ const assignBrokerToLand = async (req, res) => {
         .json({ success: false, error: "Broker not found." });
     }
 
-    if (!isAuthorizedToAssign(broker)) {
-      return res.status(403).json({
-        success: false,
-        error: "Broker is not authorized to be assigned.",
-      });
-    }
-
     land.Broker = broker._id;
     await land.save();
-
     res.json({
       success: true,
       message: "Broker assigned successfully.",

@@ -119,13 +119,14 @@ const uploadvehicle = async (req, res) => {
     const userEmail = decodedToken.Email;
 
     const newvehicle = new Vehicle({
-      Title: req.body.Title,
+      Title: req.body.title,
       Brand: req.body.Brand,
       Model: req.body.Model,
       BodyType: req.body.BodyType,
       FuelType: req.body.FuelType,
       Milleage: req.body.Milleage,
       Colour: req.body.Color,
+      City: req.body.City,
       Transmission: req.body.Transmission,
       ContractType: req.body.ContractType,
       PriceCategory: req.body.PriceCategory,
@@ -281,112 +282,64 @@ const getvehiclebyid = async (req, res, next) => {
   try {
     let vehicleId = req.params.vehicleId;
 
-    const vehicle = await Vehicle.findById(vehicleId).populate({
+    const mainVehicle = await Vehicle.findById(vehicleId).populate({
       path: "Broker",
-      select: "FirstName LastName Phone",
+      select: "FirstName LastName Phone imageUrls",
     });
 
-    if (!vehicle) {
+    if (!mainVehicle) {
       return res
         .status(404)
         .json({ success: false, message: "Vehicle not found." });
     }
+    const similarVehicle = await Vehicle.find({
+      _id: { $ne: mainVehicle._id }, // Exclude the main house
+      Price: {
+        $gte: mainVehicle.Price - 100000,
+        $lte: mainVehicle.Price + 100000,
+      }, // Adjust the price range as needed
+    })
+      .limit(3)
+      .populate({
+        path: "Broker",
+        select: "FirstName LastName Phone",
+      }); // Limit to 3 similar houses
 
     res.json({
       success: true,
-      data: vehicle,
+      mainHouse: mainVehicle,
+      similarHouses: similarVehicle,
     });
   } catch (error) {
-    console.error("Error while fetching vehicle:", error);
+    console.error("Error while fetching house:", error);
     res.status(500).json({
       success: false,
-      message: "An error occurred while fetching vehicle.",
+      message: "An error occurred while fetching house.",
     });
   }
 };
 const approveVehicle = async (req, res) => {
-  const agreementDoc = [];
-  console.log(req.params);
-  console.log(req.files);
-  console.log(req.body);
+  const { vehicleId } = req.params;
 
   try {
-    const { vehicleId } = req.params;
-
-    const vehicle = await Vehicle.findById(vehicleId);
+    const vehicle = await Vehicle.findByIdAndUpdate(
+      vehicleId,
+      { Status: "Approved" },
+      { new: true }
+    );
 
     if (!vehicle) {
       return res
         .status(404)
-        .json({ success: false, error: "vehicle not found." });
+        .json({ success: false, error: "Vehicle not found." });
     }
-
-    try {
-      if (!req.files || req.files.length === 0) {
-        return res
-          .status(400)
-          .json({ success: false, error: "No files uploaded." });
-      }
-      if (req.files.length > 4) {
-        return res
-          .status(400)
-          .json({ success: false, error: "Maximum of 3 files allowed." });
-      }
-
-      const uploadDocumentPromises = req.files
-        .filter((file) => file.mimetype.startsWith("application/pdf"))
-        .map((file) => {
-          return new Promise((resolve, reject) => {
-            if (file.size > 10485760) {
-              reject({
-                success: false,
-                error: `File ${file.originalname} is too large. Maximum size is 10 MB.`,
-              });
-            }
-
-            const folder = "Documents";
-
-            const stream = cloudinary.uploader.upload_stream(
-              { resource_type: "auto", folder: folder },
-              (error, result) => {
-                if (error) {
-                  console.error(
-                    "Error uploading document to Cloudinary:",
-                    error
-                  );
-                  reject({
-                    success: false,
-                    error: "Error uploading document to Cloudinary",
-                  });
-                }
-                agreementDoc.push(result.secure_url);
-                resolve();
-              }
-            );
-
-            streamifier.createReadStream(file.buffer).pipe(stream);
-          });
-        });
-      await Promise.all(uploadDocumentPromises);
-    } catch (error) {
-      console.error("Server error:", error);
-      if (!res.headersSent) {
-        res
-          .status(500)
-          .json({ success: false, error: "Internal Server Error" });
-      }
-    }
-    console.log(vehicle.agreementDocUrl);
-    vehicle.agreementDocUrl = agreementDoc;
-    vehicle.Status = "Approved";
-    await vehicle.save();
     res.json({
       success: true,
-      message: "Vehicle approved successfully.",
+      message: "Property is Approved successfully.",
       data: vehicle,
     });
   } catch (error) {
-    console.error("Error approving vehicle:", error);
+    console.error("Error updating property status:", error);
     res.status(500).json({ success: false, error: "Internal Server Error" });
   }
 };
@@ -399,7 +352,6 @@ const rejectVehicle = async (req, res) => {
     vehicle.Status = "Rejected";
 
     await vehicle.save();
-
     res.json({
       success: true,
       message: "vehicle rejected successfully.",
@@ -414,7 +366,6 @@ const rejectVehicle = async (req, res) => {
 const assignBrokerToVehicle = async (req, res) => {
   try {
     const { vehicleId, Email } = req.params;
-
     const vehicle = await Vehicle.findById(vehicleId);
     if (!vehicle) {
       return res
@@ -429,17 +380,9 @@ const assignBrokerToVehicle = async (req, res) => {
         .json({ success: false, error: "Broker not found." });
     }
 
-    // if (!isAuthorizedToAssign(broker)) {
-    //   return res.status(403).json({
-    //     success: false,
-    //     error: "Broker is not authorized to be assigned.",
-    //   });
-    // }
-
     vehicle.Broker = broker._id;
+    vehicle.Status = "Assigned";
     await vehicle.save();
-    const message = `You have been assigned to house ${vehicleId} by your broker manager.`;
-    // await NotificationService.sendNotification(broker.Email, message);
     res.json({
       success: true,
       message: "Broker assigned successfully.",

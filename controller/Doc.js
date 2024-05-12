@@ -2,9 +2,9 @@ const { ObjectId } = require("mongodb");
 const Doc = require("../models/Doc");
 const request = require("request");
 const fs = require("fs");
+const jwt = require("jsonwebtoken");
 
 module.exports.uploadOriginal = async (req, res) => {
-  console.log(req.body);
   let options = {
     method: "POST",
     url: "https://api.signeasy.com/v3/original/",
@@ -37,6 +37,7 @@ module.exports.uploadOriginal = async (req, res) => {
         sellerEmail: req.body.sellerEmail,
         buyerEmail: req.body.buyerEmail,
         price: req.body.Price,
+        PropertyId: req.body.Id,
         x: 100,
         y: 400,
       });
@@ -142,18 +143,17 @@ module.exports.uploadOriginal = async (req, res) => {
 };
 
 module.exports.sendEnvelope = async (req, res) => {
-  console.log(req.body.user.Email);
   let signedStatus = false;
   let response;
   const doc = await Doc.findOne({
-    $or: [
-      { sellerEmail: req.body.user.Email },
-      { buyerEmail: req.body.user.Email },
-    ],
+    $or: [{ sellerEmail: req.body.Email }, { buyerEmail: req.body.Email }],
   });
 
-  if (doc.length == 0) {
-    return res.status(404).json({ error: "Document Not Found" }); // Send signed document response
+  if (!doc) {
+    return res.json({
+      success: true,
+      docAvailable: false,
+    });
   }
 
   const pendNumber = Number(doc.pendingId);
@@ -169,7 +169,6 @@ module.exports.sendEnvelope = async (req, res) => {
   fetch(url, options)
     .then((res) => res.json())
     .then((json) => {
-      console.log(json);
       response = json;
       const userRecipient = response.recipients.find(
         (recipient) => recipient.email === req.body.user.Email
@@ -214,7 +213,6 @@ module.exports.getSignedId = async (req, res) => {
 
   request(options, async function (error, response) {
     if (error) res.json({ error: error });
-    // res.send(response.body);
     let resp = JSON.parse(response.body);
     if (resp.id) {
       const doc = await Doc.findById(new ObjectId(req.body.doc_id));
@@ -237,8 +235,11 @@ module.exports.getDoc = async (req, res) => {
     ],
   });
 
-  if (doc.length == 0) {
-    return res.status(404).json({ error: "Document Not Found" });
+  if (!doc) {
+    return res.json({
+      success: true,
+      docAvailable: false,
+    });
   }
 
   const pendNumber = Number(doc.pendingId);
@@ -254,7 +255,6 @@ module.exports.getDoc = async (req, res) => {
   fetch(url, options)
     .then((res) => res.json())
     .then((json) => {
-      console.log(json);
       response = json;
       if (
         json.recipients[0].status === "finalized" &&
@@ -266,3 +266,29 @@ module.exports.getDoc = async (req, res) => {
 };
 
 module.exports.downloadEnvelopeAndCertificate = async (req, res) => {};
+
+module.exports.fetchDocument = async (req, res) => {
+  try {
+    const token = req.headers.authorization;
+    if (!token) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Token is missing." });
+    }
+    const decodedToken = jwt.verify(token.split(" ")[1], "AZQ,PI)0(");
+    if (!decodedToken) {
+      return res.status(401).json({ success: false, error: "Invalid token." });
+    }
+    const userEmail = decodedToken.Email;
+    const docs = await Doc.find({
+      sellerEmail: userEmail,
+    });
+    res.status(200).json({ success: true, data: docs });
+  } catch (error) {
+    console.error("Error fetching properties:", error);
+    res.status(500).json({
+      success: false,
+      error: "An error occurred while fetching properties",
+    });
+  }
+};

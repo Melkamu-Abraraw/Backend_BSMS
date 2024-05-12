@@ -37,12 +37,7 @@ router.put(
   LandController.updateland
 );
 router.put("/approve/:landID/:Email", authenticate, LandController.approveLand);
-router.put("/reject/:landID/:Email", authenticate, LandController.rejectLand);
-router.put(
-  "/assign/:landID/:Email",
-  verifyToken,
-  isBrokerAdmin,
-  LandController.assignBrokerToLand
-);
+router.put("/reject/:landID", LandController.rejectLand);
+router.put("/assign/:landID/:Email", LandController.assignBrokerToLand);
 
 module.exports = router;

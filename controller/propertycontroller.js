@@ -14,6 +14,55 @@ const shuffleArray = (array) => {
   return array;
 };
 
+const allProperties = async (req, res) => {
+  try {
+    const [houses, lands, vehicles] = await Promise.all([
+      House.find({}),
+      Land.find(),
+      Vehicle.find(),
+    ]);
+
+    // Merge arrays into one array
+    let allProperties = [...houses, ...lands, ...vehicles];
+
+    // Shuffle the array
+    allProperties = shuffleArray(allProperties);
+
+    res.json({ success: true, data: allProperties });
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res
+      .status(500)
+      .json({ success: false, error: "An error occurred while fetching data" });
+  }
+  //   var request = require('request');
+  // var options = {
+  //   'method': 'POST',
+  //   'url': 'https://api.chapa.co/v1/transaction/initialize',
+  //   'headers': {
+  //     'Authorization': 'Bearer CHASECK_TEST-qdTEq6YnHFFhFIPBePj9z51xJV5Hv5d5',
+  //     'Content-Type': 'application/json'
+  //   },
+  //   body: JSON.stringify({
+  //     "amount": "100",
+  //     "currency": "ETB",
+  //     "email": "abebech_bekele@gmail.com",
+  //     "first_name": "Bilen",
+  //     "last_name": "Gizachew",
+  //     "phone_number": "0912345678",
+  //     "tx_ref": "melketest-1002",
+  //     "callback_url": "https://webhook.site/077164d6-29cb-40df-ba29-8a00e59a7e60",
+  //     "return_url": "https://www.google.com/",
+  //     "customization[title]": "Payment for my favourite merchant",
+  //     "customization[description]": "I love online payments"
+  //   })
+
+  // };
+  // request(options, function (error, response) {
+  //   if (error) throw new Error(error);
+  //   console.log(response.body);
+  // });
+};
 const fetchAllValues = async (req, res) => {
   try {
     const [houses, lands, vehicles] = await Promise.all([
@@ -72,7 +121,6 @@ const fetchAllValues = async (req, res) => {
   //   console.log(response.body);
   // });
 };
-
 const fetchCount = async (req, res) => {
   try {
     const [houseCount, landCount, vehicleCount, employeeCount] =
@@ -247,7 +295,7 @@ const fetchMyProperty = async (req, res) => {
     }
 
     const brokerId = decodedToken.Id; // Assuming the broker ID is stored in the token under the key 'brokerId'
-    const properties = await House.find({
+    const properties = await Vehicle.find({
       Broker: new mongoose.Types.ObjectId(brokerId),
       Status: "Assigned",
     });
@@ -337,6 +385,7 @@ const fetchMyApprovedProperty = async (req, res) => {
 };
 module.exports = {
   fetchAllValues,
+  allProperties,
   fetchProperty,
   payment,
   pendingProperty,

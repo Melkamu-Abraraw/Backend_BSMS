@@ -18,6 +18,13 @@ const docSchema = new Schema({
     type: String,
     default: "Not Paid",
   },
+  paymentWithdraw: {
+    type: String,
+    default: "Not Done",
+  },
+  PropertyId: {
+    type: mongoose.Schema.Types.ObjectId,
+  },
 });
 
 module.exports = mongoose.model("doc", docSchema);

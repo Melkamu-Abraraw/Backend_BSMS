@@ -3,9 +3,9 @@ const router = express.Router();
 const property = require("../controller/propertycontroller");
 
 router.get("/all", property.fetchAllValues);
+router.get("/allProp", property.allProperties);
 router.get("/pending", property.pendingProperty);
 router.get("/favourite", property.pendingProperty);
-router.get("/assigned", property.fetchMyProperty);
 router.get("/assigned/approved", property.fetchMyApprovedProperty);
 router.get("/assigned", property.fetchMyProperty);
 router.get("/number", property.fetchCount);

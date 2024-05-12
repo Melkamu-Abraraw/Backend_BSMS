@@ -167,24 +167,6 @@ const agentRegister = async (req, res, next) => {
       });
 
       await Promise.all(uploadPromises);
-      if (
-        req.body.FirstName === "" ||
-        req.body.LastName.trim === "" ||
-        req.body.Password === "" ||
-        req.body.Email === "" ||
-        req.body.Phone === "" ||
-        req.body.ConfirmPassword === ""
-      ) {
-        return res
-          .status(400)
-          .json({ success: false, message: "All fields are required." });
-      }
-      if (req.body.Password.length < 8) {
-        return res.status(400).json({
-          success: false,
-          message: "Password must be at least 8 characters long.",
-        });
-      }
 
       const existingUser = await User.findOne({ Email: req.body.Email });
       if (existingUser) {
@@ -193,38 +175,7 @@ const agentRegister = async (req, res, next) => {
           message: "Email address is already in use.",
         });
       }
-      if (
-        !/^[a-zA-Z]+$/.test(req.body.FirstName) ||
-        !/^[a-zA-Z]+$/.test(req.body.LastName)
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: "First name and last name must contain only letters.",
-        });
-      }
-      if (req.body.Password.length < 8) {
-        return res.status(400).json({
-          success: false,
-          message: "Password must be at least 8 characters long.",
-        });
-      }
 
-      if (!/^\d+$/.test(req.body.Phone) || req.body.Phone.length > 10) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "Phone number must contain only numbers and not exceed 10 digits.",
-        });
-      }
-      if (
-        !/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/.test(
-          req.body.Email
-        )
-      ) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid email address." });
-      }
       let user = new User({
         FirstName: req.body.FirstName,
         LastName: req.body.LastName,
@@ -235,11 +186,10 @@ const agentRegister = async (req, res, next) => {
         Role: "Broker",
         imageUrls: imageUrls,
       });
-
       const usersaved = await user.save();
-
       res.json({
-        message: "Agent Added Successfully",
+        success: true,
+        message: "Registration is Successfull",
         data: usersaved,
       });
     });
@@ -300,7 +250,7 @@ const brokerAdminRegister = (req, res, next) => {
 
       const existingUser = await User.findOne({ Email: req.body.Email });
       if (existingUser) {
-        return res.status(400).json({
+        return res.json({
           success: false,
           message: "Email address is already in use.",
         });
@@ -463,6 +413,7 @@ const adminRegister = (req, res, next) => {
 
 const list = (req, res, next) => {
   User.find({ Role: "User" })
+    .sort({ createdAt: -1 })
     .then((response) => {
       res.json({
         response,
@@ -591,12 +542,13 @@ const update = (req, res, next) => {
   let updatedData = {
     FirstName: req.body.firstName,
     LastName: req.body.lastName,
-    Phone: req.body.phone,
+    Status: req.body.status,
   };
 
   User.findByIdAndUpdate(id, { $set: updatedData }, { new: true }) // Add { new: true } to return the updated document
     .then((updatedUser) => {
       res.status(200).json({
+        success: true,
         message: "User Updated Successfully!",
         user: updatedUser, // Send back the updated user data
       });
@@ -690,7 +642,8 @@ const login = (req, res, next) => {
 const blacklistedTokens = [];
 
 const listBroker = (req, res, next) => {
-  User.find({ Role: "Broker" }) // Filter users by role "BrokerAdmin"
+  User.find({ Role: "Broker" })
+    .sort({ createdAt: -1 }) // Filter users by role "BrokerAdmin"
     .then((users) => {
       if (!users) {
         return res
