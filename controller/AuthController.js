@@ -452,9 +452,19 @@ const allChatUsers = async (req, res) => {
 const searchUsers = async (req, res, next) => {
   try {
     const { query } = req.query;
+    const loggedInUserRole = req.headers.userrole;
 
+    let roleToQuery;
+
+    if (loggedInUserRole === "Broker") {
+      roleToQuery = ["User"];
+    } else if (loggedInUserRole === "User") {
+      roleToQuery = ["Broker", "User"];
+    } else {
+      return res.status(403).json({ error: "Unauthorized search" });
+    }
     const searchedUsers = await User.find({
-      Role: { $in: ["Broker", "User"] },
+      Role: { $in: roleToQuery },
       $or: [
         { FirstName: { $regex: query, $options: "i" } },
         { LastName: { $regex: query, $options: "i" } },

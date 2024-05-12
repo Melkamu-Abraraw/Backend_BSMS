@@ -59,7 +59,7 @@ const sendPropertyPostedNotification = async (req, res) => {
     // Triggering Pusher event
     pusherServer.trigger("notifications", "new-notification", {
       title: "New Property",
-      message: `There is a new posted property, that you haven't seen. \n(${new Date().toLocaleString()}) `,
+      message: `You hane  new posted property, that you haven't seen. \n(${new Date().toLocaleString()}) `,
       userId: userRole,
     });
     res.json({
