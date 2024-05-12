@@ -4,6 +4,7 @@ const Land = require("../models/Land");
 const Vehicle = require("../models/Vehicle");
 const jwt = require("jsonwebtoken");
 const Employee = require("../models/Employee");
+const User = require("../models/Users");
 
 // Fisher-Yates (aka Knuth) Shuffle Algorithm
 const shuffleArray = (array) => {
@@ -177,7 +178,6 @@ const payment = async (req, res) => {
 
 const fetchProperty = async (req, res) => {
   try {
-    // Decode the token sent from the frontend
     const token = req.headers.authorization;
     if (!token) {
       return res
@@ -188,9 +188,7 @@ const fetchProperty = async (req, res) => {
     if (!decodedToken) {
       return res.status(401).json({ success: false, error: "Invalid token." });
     }
-
     const userEmail = decodedToken.Email;
-    // Fetch data from all collections concurrently
     const [houses, lands, vehicles] = await Promise.all([
       House.find({
         UploadedBy: userEmail,
@@ -210,12 +208,9 @@ const fetchProperty = async (req, res) => {
       }),
     ]);
 
-    // Merge arrays into one array
     let allProperties = [...houses, ...lands, ...vehicles];
-    // Shuffle the array
     allProperties = shuffleArray(allProperties);
     allProperties.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
     res.json({ success: true, data: allProperties });
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -315,42 +310,6 @@ const fetchMyProperty = async (req, res) => {
 };
 
 const fetchMyApprovedProperty = async (req, res) => {
-  // try {
-  //   // Decode the token sent from the frontend
-  //   const token = req.headers.authorization;
-  //   if (!token) {
-  //     return res
-  //       .status(401)
-  //       .json({ success: false, error: "Token is missing." });
-  //   }
-  //   const decodedToken = jwt.verify(token.split(" ")[1], "AZQ,PI)0(");
-  //   if (!decodedToken) {
-  //     return res.status(401).json({ success: false, error: "Invalid token." });
-  //   }
-
-  //   const userEmail = decodedToken.id;
-  //   const [houses, lands, vehicles] = await Promise.all([
-  //     House.find({
-  //       UploadedBy: userEmail,
-  //     }),
-  //     Land.find({
-  //       UploadedBy: userEmail,
-  //     }),
-  //     Vehicle.find({ uploadedby: userEmail }),
-  //   ]);
-
-  //   // Merge arrays into one array
-  //   let allProperties = [...houses, ...lands, ...vehicles];
-  //   // Shuffle the array
-  //   allProperties = shuffleArray(allProperties);
-
-  //   res.json({ success: true, data: allProperties });
-  // } catch (error) {
-  //   console.error("Error fetching data:", error);
-  //   res
-  //     .status(500)
-  //     .json({ success: false, error: "An error occurred while fetching data" });
-  //
   try {
     // Decode the token sent from the frontend
     const token = req.headers.authorization;
@@ -364,17 +323,29 @@ const fetchMyApprovedProperty = async (req, res) => {
       return res.status(401).json({ success: false, error: "Invalid token." });
     }
 
-    const brokerId = decodedToken.Id; // Assuming the broker ID is stored in the token under the key 'brokerId'
-    const properties = await House.find({
+    const brokerId = decodedToken.Id;
+    const houseProperties = await House.find({
       Broker: new mongoose.Types.ObjectId(brokerId),
-      Status: "Approved",
     });
-    if (!properties || properties.length === 0) {
+    const landProperties = await Land.find({
+      Broker: new mongoose.Types.ObjectId(brokerId),
+    });
+    const vehicleProperties = await Vehicle.find({
+      Broker: new mongoose.Types.ObjectId(brokerId),
+    });
+
+    const allProperties = [
+      ...houseProperties,
+      ...landProperties,
+      ...vehicleProperties,
+    ];
+
+    if (!allProperties || allProperties.length === 0) {
       return res
-        .status(404)
+        .status(400)
         .json({ success: false, error: "Properties not found." });
     }
-    res.json({ success: true, data: properties });
+    res.json({ success: true, data: allProperties });
   } catch (error) {
     console.error("Error fetching properties:", error);
     res.status(500).json({
@@ -383,6 +354,77 @@ const fetchMyApprovedProperty = async (req, res) => {
     });
   }
 };
+const fetchMyApproved = async (req, res) => {
+  try {
+    // Decode the token sent from the frontend
+    const token = req.headers.authorization;
+    if (!token) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Token is missing." });
+    }
+    const decodedToken = jwt.verify(token.split(" ")[1], "AZQ,PI)0(");
+    if (!decodedToken) {
+      return res.status(401).json({ success: false, error: "Invalid token." });
+    }
+
+    const brokerId = decodedToken.Id;
+    const houseProperties = await House.find({
+      Broker: new mongoose.Types.ObjectId(brokerId),
+      Status: "Approved",
+    });
+    const landProperties = await Land.find({
+      Broker: new mongoose.Types.ObjectId(brokerId),
+      Status: "Approved",
+    });
+    const vehicleProperties = await Vehicle.find({
+      Broker: new mongoose.Types.ObjectId(brokerId),
+      Status: "Approved",
+    });
+
+    const allProperties = [
+      ...houseProperties,
+      ...landProperties,
+      ...vehicleProperties,
+    ];
+
+    if (!allProperties || allProperties.length === 0) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Properties not found." });
+    }
+    res.json({ success: true, data: allProperties });
+  } catch (error) {
+    console.error("Error fetching properties:", error);
+    res.status(500).json({
+      success: false,
+      error: "An error occurred while fetching properties",
+    });
+  }
+};
+const fetchAll = async (req, res) => {
+  try {
+    const houseCount = await House.countDocuments();
+    const landCount = await Land.countDocuments();
+    const vehicleCount = await Vehicle.countDocuments();
+    const userCount = await User.countDocuments({ Role: "User" });
+    const brokerCount = await User.countDocuments({ Role: "Broker" });
+
+    res.status(200).json({
+      success: true,
+      totalProperties: houseCount + vehicleCount + landCount,
+      totalUsers: userCount,
+      totalBrokers: brokerCount,
+    });
+  } catch (error) {
+    console.error("Error fetching Data:", error);
+    res.status(500).json({
+      success: false,
+      error: "An error occurred while fetching Data",
+    });
+  }
+};
+
 module.exports = {
   fetchAllValues,
   allProperties,
@@ -392,4 +434,6 @@ module.exports = {
   fetchCount,
   fetchMyProperty,
   fetchMyApprovedProperty,
+  fetchMyApproved,
+  fetchAll,
 };
