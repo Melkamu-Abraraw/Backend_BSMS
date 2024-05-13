@@ -9,9 +9,8 @@ dotenv.config();
 //   .connect(url, {})
 //   .then((_result) => console.log("database connected"))
 //   .catch((err) => console.log(err));
-
 mongoose
-  .connect(process.env.BSMS_MONGO_URL, {
+  .connect(process.env.local_url, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
