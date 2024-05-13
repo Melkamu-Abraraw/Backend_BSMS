@@ -40,6 +40,11 @@ router.get("/searchChats/:userId", AuthController.searchChats);
 
 router.get("/allUser", AuthController.listUser);
 router.post("/update/:id", AuthController.update);
+router.post(
+  "/profile/:userId",
+  upload.array("images", 3),
+  AuthController.updateProfile
+);
 router.post("/remove/:id", AuthController.Remove);
 router.post("/logout", AuthController.logout);
 router.post("/forgotpassword", AuthController.initiatePassword);

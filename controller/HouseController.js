@@ -276,7 +276,7 @@ const gethousebyid = async (req, res, next) => {
 
     const mainHouse = await House.findById(houseId).populate({
       path: "Broker",
-      select: "FirstName LastName Phone imageUrls",
+      select: "FirstName LastName Phone imageUrls Email",
     });
 
     if (!mainHouse) {

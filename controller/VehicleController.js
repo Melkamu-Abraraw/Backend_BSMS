@@ -284,7 +284,7 @@ const getvehiclebyid = async (req, res, next) => {
 
     const mainVehicle = await Vehicle.findById(vehicleId).populate({
       path: "Broker",
-      select: "FirstName LastName Phone imageUrls",
+      select: "FirstName LastName Phone imageUrls Email",
     });
 
     if (!mainVehicle) {

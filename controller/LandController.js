@@ -265,7 +265,7 @@ const getlandbyid = async (req, res, next) => {
     let landID = req.params.landID;
     const mainLand = await Land.findById(landID).populate({
       path: "Broker",
-      select: "FirstName LastName Phone imageUrls",
+      select: "FirstName LastName Phone imageUrls Email",
     });
 
     if (!mainLand) {

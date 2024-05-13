@@ -62,7 +62,7 @@ const HouseSchema = new Schema(
       ref: "User",
     },
 
-    UploadedBy: {
+    uploadedby: {
       type: String,
     },
     imageUrls: [String],
