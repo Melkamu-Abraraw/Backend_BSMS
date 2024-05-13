@@ -1,41 +1,40 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 const VehicleSchema = new Schema(
-  
   {
-    Title:{
+    Title: {
       type: String,
     },
-    Brand:{
+    Brand: {
       type: String,
     },
-    Model:{
+    Model: {
       type: String,
     },
-    BodyType:{
+    BodyType: {
       type: String,
     },
-    FuelType:{
+    FuelType: {
       type: String,
     },
-    Milleage:{
+    Milleage: {
       type: String,
     },
     ContractType: {
       type: String,
     },
-    Currency:{
-      type:String,
-  },
- 
+    Currency: {
+      type: String,
+    },
+
     Location: {
       lat: { type: Number },
-      lng: { type: Number }
-  },
-  PriceCategory: {
-    type: String,
-},
-    
+      lng: { type: Number },
+    },
+    PriceCategory: {
+      type: String,
+    },
+
     Colour: {
       type: String,
     },
@@ -56,7 +55,7 @@ const VehicleSchema = new Schema(
     },
     Status: {
       type: String,
-      enum: ["Pending","Assigned", "Approved", "Rejected"],
+      enum: ["Pending", "Assigned", "Approved", "Rejected"],
       default: "Pending",
     },
     approvedBy: {

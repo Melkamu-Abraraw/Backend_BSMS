@@ -17,7 +17,7 @@ const sendPropertyAssignmentNotification = async (req, res) => {
 
     // Triggering Pusher event
     pusherServer.trigger("notifications", "new-notification", {
-      title: "Property Assignment",
+      title: "Property Assigned",
       message: `You have been assigned to a new property. \n(${new Date().toLocaleString()}) `,
       userId: brokerEmail,
     });
@@ -47,20 +47,20 @@ const sendPropertyAssignmentNotification = async (req, res) => {
 
 const sendPropertyPostedNotification = async (req, res) => {
   try {
-    const { userRole } = req.params;
+    const { uploadedBy } = req.params;
     const notification = new Notification({
-      userId: userRole,
-      title: "New Property",
-      message: `There is a new posted property, that you haven't seen. \n(${new Date().toLocaleString()}) `,
+      userId: uploadedBy,
+      title: "Property Approved",
+      message: `Congratulation. The property that you uploaded is Approved! \n(${new Date().toLocaleString()}) `,
       type: "info",
     });
     await notification.save();
 
     // Triggering Pusher event
     pusherServer.trigger("notifications", "new-notification", {
-      title: "New Property",
-      message: `You hane  new posted property, that you haven't seen. \n(${new Date().toLocaleString()}) `,
-      userId: userRole,
+      title: "Property Approved",
+      message: `Congratulation. The property that you uploaded is Approved! \n(${new Date().toLocaleString()}) `,
+      userId: uploadedBy,
     });
     res.json({
       success: true,
@@ -91,17 +91,60 @@ const sendPropertyRegistrationNotification = async (req, res) => {
 
     const notification = new Notification({
       userId: brokerAdminRole,
-      title: "Property Registration",
-      message: `You have been Recived New Registered Property, please assign to a broker. \n(${new Date().toLocaleString()}) `,
+      title: "Property Registered",
+      message: `You have been Recived New Registered Property, please check and assign to a broker. \n(${new Date().toLocaleString()}) `,
       type: "info",
     });
     await notification.save();
 
     // Triggering Pusher event
     pusherServer.trigger("notifications", "new-notification", {
-      title: "Property Registration",
+      title: "Property Registered",
       message: `You have been Recived New Registered Property, please assign to a broker. \n(${new Date().toLocaleString()}) `,
       userId: brokerAdminRole,
+    });
+    res.json({
+      success: true,
+      message: "Notification sent to manager successfully",
+    });
+    // delete old notifications from the database after 7 days
+    cron.schedule("0 0 * * *", async () => {
+      try {
+        const sevenDaysAgo = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
+        await Notification.deleteMany({
+          isRead: true,
+          createdAt: { $lt: sevenDaysAgo },
+        });
+      } catch (error) {
+        console.error("Error deleting old read notifications:", error);
+      }
+    });
+  } catch (error) {
+    console.error("Error sending notification:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to send notification" });
+  }
+};
+
+const sendPropertyRejectionNotification = async (req, res) => {
+  try {
+    const { uploadedBy } = req.params;
+
+    console.log(uploadedBy);
+    const notification = new Notification({
+      userId: uploadedBy,
+      title: "Property Rejected",
+      message: `Sorry,The properity that You uploaded is rejected by Broker Manager. \n(${new Date().toLocaleString()}) `,
+      type: "info",
+    });
+    await notification.save();
+
+    // Triggering Pusher event
+    pusherServer.trigger("notifications", "new-notification", {
+      title: "Property Rejection",
+      message: `You have been Recived New Registered Property, please assign to a broker. \n(${new Date().toLocaleString()}) `,
+      userId: uploadedBy,
     });
     res.json({
       success: true,
@@ -174,6 +217,7 @@ module.exports = {
   sendPropertyAssignmentNotification,
   sendPropertyPostedNotification,
   sendPropertyRegistrationNotification,
+  sendPropertyRejectionNotification,
   fetchAllNotification,
   markAllSeenNotificationAsRead,
 };

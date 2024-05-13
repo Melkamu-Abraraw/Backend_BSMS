@@ -12,12 +12,16 @@ router.post(
   notificationcontroller.sendPropertyAssignmentNotification
 );
 router.post(
-  "/sendPropertyPostedNotification/:userRole",
+  "/sendPropertyPostedNotification/:uploadedBy",
   notificationcontroller.sendPropertyPostedNotification
 );
 router.post(
   "/sendPropertyRegistrationNotification/:brokerAdminRole",
   notificationcontroller.sendPropertyRegistrationNotification
+);
+router.post(
+  "/sendPropertyRejectionNotification/:uploadedBy",
+  notificationcontroller.sendPropertyRejectionNotification
 );
 router.put(
   "/markAllSeenNotificationAsRead/:id",

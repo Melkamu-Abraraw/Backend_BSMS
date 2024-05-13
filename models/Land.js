@@ -1,62 +1,63 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
 
-const LandSchema = new Schema({
-    Title:{
-        type: String,
+const LandSchema = new Schema(
+  {
+    Title: {
+      type: String,
     },
     ContractType: {
-        type: String,
+      type: String,
     },
     PriceCategory: {
-        type: String,
+      type: String,
     },
-    Currency:{
-        type:String,
+    Currency: {
+      type: String,
     },
-    Area:{
-        type:Number,
+    Area: {
+      type: Number,
     },
     Location: {
-        lat: { type: Number, required: true },
-        lng: { type: Number, required: true }
+      lat: { type: Number, required: true },
+      lng: { type: Number, required: true },
     },
-    City:{
-        type:String,
+    City: {
+      type: String,
     },
-    Description:{
-        type:String,
+    Description: {
+      type: String,
     },
     Price: {
-        type:Number,
+      type: Number,
     },
-    Status:{
-        type:String,
-        enum:['Pending','Approved','Rejected'],
-        default: 'Pending'
+    Status: {
+      type: String,
+      enum: ["Pending", "Approved", "Rejected"],
+      default: "Pending",
     },
-    approvedBy:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:'User'
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
     Broker: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User' 
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
-  
-   UploadedBy:{
-   type:String
+
+    uploadedby: {
+      type: String,
     },
-    PropertyType:{
-        type: String,
-        default:'Land'
+    PropertyType: {
+      type: String,
+      default: "Land",
     },
-    
+
     imageUrls: [String],
-    documentUrls:[String],
- 
+    documentUrls: [String],
+  },
+  { timestamps: true }
+);
 
-},{timestamps:true})
-
-const Land = mongoose.model('Land',LandSchema)
-module.exports = Land
+const Land = mongoose.model("Land", LandSchema);
+module.exports = Land;

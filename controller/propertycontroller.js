@@ -289,7 +289,8 @@ const fetchMyProperty = async (req, res) => {
       return res.status(401).json({ success: false, error: "Invalid token." });
     }
 
-    const brokerId = decodedToken.Id; // Assuming the broker ID is stored in the token under the key 'brokerId'
+    const brokerId = decodedToken.Id;
+    console.log(brokerId);
     const properties = await Vehicle.find({
       Broker: new mongoose.Types.ObjectId(brokerId),
       Status: "Assigned",
