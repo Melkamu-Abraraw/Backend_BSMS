@@ -12,6 +12,7 @@ router.get("/approved", property.fetchMyApproved);
 router.get("/assigned", property.fetchMyProperty);
 router.get("/number", property.fetchCount);
 router.get("/getProperty", property.fetchProperty);
+router.get("/getMe", property.fetchAllProp);
 router.get("/pay", property.payment);
 
 module.exports = router;

@@ -5,9 +5,9 @@ const Doc = require("../models/Doc");
 const uuid = require("uuid");
 const path = require("path");
 const fs = require("fs");
-const { House } = require("../models/House");
-const { Land } = require("../models/Land");
-const { Vehicle } = require("../models/Vehicle");
+const House = require("../models/House");
+const Land = require("../models/Land");
+const Vehicle = require("../models/Vehicle");
 
 function generateRandomString() {
   const characters = "abcdefghijklmnopqrstuvwxyz";
@@ -31,8 +31,13 @@ function generateRandomString() {
 }
 
 const Payment = async (req, res) => {
+  console.log(req.body);
   const doc = await Doc.findOne({
-    $or: [{ sellerEmail: req.body.Email }, { buyerEmail: req.body.Email }],
+    $or: [
+      { sellerEmail: req.body.Email },
+      { buyerEmail: req.body.Email },
+      { brokerEmail: req.body.Email },
+    ],
   });
 
   if (!doc) {
@@ -81,6 +86,7 @@ const Payment = async (req, res) => {
         request(options, function (error, response) {
           if (error) throw new Error(error);
           const resp = JSON.parse(response.body);
+          console.log(resp);
           res.json({
             success: true,
             docAvailable: true,
@@ -196,7 +202,6 @@ const TranferMoney = async (req, res) => {
   request(options, async function (error, response) {
     if (error) throw new Error(error);
     if (response.body.status === "success") {
-      console.log(response.body);
       try {
         const doc = await Doc.findOne();
         doc.paymentWithdraw = "Done";

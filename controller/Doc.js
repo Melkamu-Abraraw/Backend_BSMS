@@ -5,6 +5,19 @@ const fs = require("fs");
 const jwt = require("jsonwebtoken");
 
 module.exports.uploadOriginal = async (req, res) => {
+  const token = req.headers.authorization;
+
+  if (!token) {
+    return res.status(401).json({ success: false, error: "Token is missing." });
+  }
+
+  const decodedToken = jwt.verify(token.split(" ")[1], "AZQ,PI)0(");
+
+  if (!decodedToken) {
+    return res.status(401).json({ success: false, error: "Invalid token." });
+  }
+
+  const userEmail = decodedToken.Email;
   let options = {
     method: "POST",
     url: "https://api.signeasy.com/v3/original/",
@@ -35,6 +48,7 @@ module.exports.uploadOriginal = async (req, res) => {
         originalId: resp.id,
         amount: 10,
         sellerEmail: req.body.sellerEmail,
+        brokerEmail: userEmail,
         buyerEmail: req.body.buyerEmail,
         price: req.body.Price,
         PropertyId: req.body.Id,
@@ -143,6 +157,7 @@ module.exports.uploadOriginal = async (req, res) => {
 };
 
 module.exports.sendEnvelope = async (req, res) => {
+  console.log(req.body);
   let signedStatus = false;
   let response;
   const doc = await Doc.findOne({
@@ -171,7 +186,7 @@ module.exports.sendEnvelope = async (req, res) => {
     .then((json) => {
       response = json;
       const userRecipient = response.recipients.find(
-        (recipient) => recipient.email === req.body.user.Email
+        (recipient) => recipient.email === req.body.Email
       );
 
       if (userRecipient) {
@@ -187,7 +202,7 @@ module.exports.sendEnvelope = async (req, res) => {
               "content-type": "application/json",
             },
             body: JSON.stringify({
-              recipient_email: req.body.user.Email,
+              recipient_email: req.body.Email,
               redirect_url: "http://localhost:3000/dashboard/seller",
             }),
           };
@@ -229,10 +244,7 @@ module.exports.getSignedId = async (req, res) => {
 
 module.exports.getDoc = async (req, res) => {
   const doc = await Doc.findOne({
-    $or: [
-      { sellerEmail: req.body.user.Email },
-      { buyerEmail: req.body.user.Email },
-    ],
+    $or: [{ sellerEmail: req.body.Email }, { buyerEmail: req.body.Email }],
   });
 
   if (!doc) {

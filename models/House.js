@@ -49,10 +49,10 @@ const HouseSchema = new Schema(
     },
     Status: {
       type: String,
-      enum: ["Pending", "Approved", "Rejected", "Assigned"],
+      enum: ["Pending", "Approved", "Rejected", "Assigned", "Closed"],
       default: "Pending",
     },
-
+    PricePrefix: { type: String },
     approvedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

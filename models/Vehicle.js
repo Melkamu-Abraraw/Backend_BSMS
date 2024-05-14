@@ -14,6 +14,7 @@ const VehicleSchema = new Schema(
     BodyType: {
       type: String,
     },
+    PricePrefix: { type: String },
     FuelType: {
       type: String,
     },
@@ -50,12 +51,15 @@ const VehicleSchema = new Schema(
     Description: {
       type: String,
     },
+    City: {
+      type: String,
+    },
     Rating: {
       type: Number,
     },
     Status: {
       type: String,
-      enum: ["Pending", "Assigned", "Approved", "Rejected"],
+      enum: ["Pending", "Assigned", "Approved", "Rejected", "Closed"],
       default: "Pending",
     },
     approvedBy: {

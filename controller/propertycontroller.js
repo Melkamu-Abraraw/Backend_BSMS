@@ -191,13 +191,13 @@ const fetchProperty = async (req, res) => {
     const userEmail = decodedToken.Email;
     const [houses, lands, vehicles] = await Promise.all([
       House.find({
-        UploadedBy: userEmail,
+        uploadedby: userEmail,
       }).populate({
         path: "Broker",
         select: "FirstName LastName Phone",
       }),
       Land.find({
-        UploadedBy: userEmail,
+        uploadedby: userEmail,
       }).populate({
         path: "Broker",
         select: "FirstName LastName Phone",
@@ -290,7 +290,6 @@ const fetchMyProperty = async (req, res) => {
     }
 
     const brokerId = decodedToken.Id;
-    console.log(brokerId);
     const properties = await Vehicle.find({
       Broker: new mongoose.Types.ObjectId(brokerId),
       Status: "Assigned",
@@ -327,12 +326,15 @@ const fetchMyApprovedProperty = async (req, res) => {
     const brokerId = decodedToken.Id;
     const houseProperties = await House.find({
       Broker: new mongoose.Types.ObjectId(brokerId),
+      Status: "Assigned",
     });
     const landProperties = await Land.find({
       Broker: new mongoose.Types.ObjectId(brokerId),
+      Status: "Assigned",
     });
     const vehicleProperties = await Vehicle.find({
       Broker: new mongoose.Types.ObjectId(brokerId),
+      Status: "Assigned",
     });
 
     const allProperties = [
@@ -425,6 +427,75 @@ const fetchAll = async (req, res) => {
     });
   }
 };
+const fetchAllProp = async (req, res) => {
+  try {
+    const token = req.headers.authorization;
+    if (!token) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Token is missing." });
+    }
+    const decodedToken = jwt.verify(token.split(" ")[1], "AZQ,PI)0(");
+    if (!decodedToken) {
+      return res.status(401).json({ success: false, error: "Invalid token." });
+    }
+    const brokerId = decodedToken.Id;
+
+    const houseCount = await House.countDocuments({
+      Broker: new mongoose.Types.ObjectId(brokerId),
+    });
+    const landCount = await Land.countDocuments({
+      Broker: new mongoose.Types.ObjectId(brokerId),
+    });
+    const vehicleCount = await Vehicle.countDocuments({
+      Broker: new mongoose.Types.ObjectId(brokerId),
+    });
+    const assignedHouseCount = await House.countDocuments({
+      Broker: new mongoose.Types.ObjectId(brokerId),
+      Status: "Assigned",
+    });
+    const assignedLandCount = await Land.countDocuments({
+      Broker: new mongoose.Types.ObjectId(brokerId),
+      Status: "Assigned",
+    });
+    const assignedVehicleCount = await Vehicle.countDocuments({
+      Broker: new mongoose.Types.ObjectId(brokerId),
+      Status: "Assigned",
+    });
+    const approvedHouseCount = await House.countDocuments({
+      Broker: new mongoose.Types.ObjectId(brokerId),
+      Status: "Approved",
+    });
+    const approvedLandCount = await Land.countDocuments({
+      Broker: new mongoose.Types.ObjectId(brokerId),
+      Status: "Approved",
+    });
+    const approvedVehicleCount = await Vehicle.countDocuments({
+      Broker: new mongoose.Types.ObjectId(brokerId),
+
+      Status: "Approved",
+    });
+
+    const totalProperties = houseCount + vehicleCount + landCount;
+    const assignedProperties =
+      assignedHouseCount + assignedVehicleCount + assignedLandCount;
+    const approvedProperties =
+      approvedHouseCount + approvedVehicleCount + approvedLandCount;
+
+    res.status(200).json({
+      success: true,
+      totalProperties,
+      assignedProperties,
+      approvedProperties,
+    });
+  } catch (error) {
+    console.error("Error fetching Data:", error);
+    res.status(500).json({
+      success: false,
+      error: "An error occurred while fetching Data",
+    });
+  }
+};
 
 module.exports = {
   fetchAllValues,
@@ -437,4 +508,5 @@ module.exports = {
   fetchMyApprovedProperty,
   fetchMyApproved,
   fetchAll,
+  fetchAllProp,
 };

@@ -633,7 +633,6 @@ const login = (req, res, next) => {
                   token: token,
                   user: User,
                 };
-
                 res.json({
                   responseData,
                 });

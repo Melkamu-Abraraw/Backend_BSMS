@@ -15,6 +15,7 @@ const LandSchema = new Schema(
     Currency: {
       type: String,
     },
+    PricePrefix: { type: String },
     Area: {
       type: Number,
     },
@@ -33,7 +34,7 @@ const LandSchema = new Schema(
     },
     Status: {
       type: String,
-      enum: ["Pending", "Approved", "Rejected"],
+      enum: ["Pending", "Approved", "Rejected", "Closed"],
       default: "Pending",
     },
     approvedBy: {

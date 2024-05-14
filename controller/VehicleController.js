@@ -138,6 +138,7 @@ const uploadvehicle = async (req, res) => {
       uploadedby: userEmail,
       imageUrls: imageUrls,
       documentUrls: documentUrls,
+      PricePrefix: req.body.PricePrefix,
     });
 
     const savedvehicle = await newvehicle.save();

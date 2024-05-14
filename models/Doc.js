@@ -8,6 +8,7 @@ const docSchema = new Schema({
   pendingId: String,
   signedId: String,
   sellerEmail: String,
+  brokerEmail: String,
   buyerEmail: String,
   urlId: Number,
   x: Number,

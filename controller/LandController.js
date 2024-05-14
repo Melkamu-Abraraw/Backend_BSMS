@@ -133,9 +133,10 @@ const uploadland = async (req, res) => {
       Currency: req.body.Currency,
       Price: req.body.Price,
       imageUrls: imageUrls,
-      UploadedBy: userEmail,
+      uploadedby: userEmail,
       documentUrls: documentUrls,
       Location: locationObject,
+      PricePrefix: req.body.PricePrefix,
     });
 
     const savedland = await newland.save();

@@ -133,9 +133,10 @@ const uploadImages = async (req, res) => {
       City: req.body.City,
       Description: req.body.description,
       Price: req.body.Price,
-      UploadedBy: userEmail,
+      uploadedby: userEmail,
       imageUrls: imageUrls,
       documentUrls: documentUrls,
+      PricePrefix: req.body.PricePrefix,
     });
 
     const savedHouse = await newHouse.save();
